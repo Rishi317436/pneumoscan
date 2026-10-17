@@ -1,0 +1,152 @@
+<%- include('partials/header') %>
+<div class="container py-4">
+    <!-- Hero Section -->
+    <div class="card border-0 rounded-4 overflow-hidden shadow-sm mb-4">
+        <div class="bg-teal-gradient p-5 text-white position-relative">
+            <div class="row align-items-center position-relative z-1">
+                <div class="col-lg-8">
+                    <span class="badge bg-white text-teal rounded-pill px-3 py-2 fw-medium mb-3 shadow-sm d-inline-block">AI-Powered Chest X-Ray Analysis</span>
+                    <h1 class="display-5 fw-bold mb-3">Welcome back, <%= user.name %>! 👋</h1>
+                    <p class="lead mb-4 opacity-90">Automated Pneumonia Detection & Multi-Method Comparison System powered by Digital Image Processing and Deep Learning.</p>
+                    <a href="/scan/upload" class="btn btn-light btn-lg rounded-pill px-4 shadow text-teal fw-bold">
+                        <i class="fas fa-microscope me-2"></i> Start New Analysis
+                    </a>
+                </div>
+                <div class="col-lg-4 text-center d-none d-lg-block">
+                    <i class="fas fa-lungs fa-8x opacity-25 float-anim"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <a href="/scan/upload" class="text-decoration-none">
+                <div class="card border-0 rounded-4 shadow-sm h-100 card-hover bg-glass">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-teal-subtle text-teal mx-auto mb-3">
+                            <i class="fas fa-upload fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">Upload Scan</h4>
+                        <p class="text-muted mb-0">Upload Chest X-Ray for analysis</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/scan/results" class="text-decoration-none">
+                <div class="card border-0 rounded-4 shadow-sm h-100 card-hover bg-glass">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-primary-subtle text-primary mx-auto mb-3">
+                            <i class="fas fa-chart-line fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">Detection Results</h4>
+                        <p class="text-muted mb-0">View past predictions & history</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/comparison" class="text-decoration-none">
+                <div class="card border-0 rounded-4 shadow-sm h-100 card-hover bg-glass">
+                    <div class="card-body p-4 text-center">
+                        <div class="icon-circle bg-warning-subtle text-warning mx-auto mb-3">
+                            <i class="fas fa-balance-scale fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-1">Method Comparison</h4>
+                        <p class="text-muted mb-0">Compare manual vs DL approaches</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Platform Capabilities -->
+        <div class="col-lg-6">
+            <div class="card border-0 rounded-4 shadow-sm h-100 bg-glass">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="fas fa-lungs text-teal fs-3 me-3"></i>
+                        <h4 class="card-title fw-bold mb-0">Platform Capabilities</h4>
+                    </div>
+                    <p class="text-muted">This platform utilizes a dual-method system for highly accurate pneumonia detection from chest X-ray images.</p>
+                    
+                    <div class="d-flex mb-3 align-items-start">
+                        <div class="bg-light rounded p-2 me-3 text-secondary"><i class="fas fa-cogs fs-5"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Traditional Image Processing</h6>
+                            <p class="small text-muted mb-0">Uses OpenCV feature extraction (GLCM, LBP, intensity, edges) with threshold-based logic.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start">
+                        <div class="bg-light rounded p-2 me-3 text-secondary"><i class="fas fa-robot fs-5"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Machine Learning / DL</h6>
+                            <p class="small text-muted mb-0">Employs a trained DenseNet121 architecture to classify scans with high confidence.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workflow Steps -->
+        <div class="col-lg-6">
+            <div class="card border-0 rounded-4 shadow-sm h-100 bg-glass">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="fas fa-project-diagram text-primary fs-3 me-3"></i>
+                        <h4 class="card-title fw-bold mb-0">Workflow Steps</h4>
+                    </div>
+                    
+                    <div class="position-relative workflow-timeline ms-2">
+                        <div class="workflow-step d-flex mb-3">
+                            <div class="step-number bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3 z-1" style="width: 32px; height: 32px; flex-shrink: 0;">1</div>
+                            <div>
+                                <h6 class="fw-bold mb-1 mt-1">Upload Chest X-Ray</h6>
+                                <p class="small text-muted mb-0">Securely upload an anterior-posterior (AP) or posterior-anterior (PA) chest radiograph.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex mb-3">
+                            <div class="step-number bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3 z-1" style="width: 32px; height: 32px; flex-shrink: 0;">2</div>
+                            <div>
+                                <h6 class="fw-bold mb-1 mt-1">Traditional Method Analysis</h6>
+                                <p class="small text-muted mb-0">Extracts handcrafted features using traditional digital image processing.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex mb-3">
+                            <div class="step-number bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3 z-1" style="width: 32px; height: 32px; flex-shrink: 0;">3</div>
+                            <div>
+                                <h6 class="fw-bold mb-1 mt-1">Machine Learning Classification</h6>
+                                <p class="small text-muted mb-0">Processes image through DenseNet121 and generates Grad-CAM visualizations.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex">
+                            <div class="step-number bg-teal text-white rounded-circle d-flex align-items-center justify-content-center me-3 z-1" style="width: 32px; height: 32px; flex-shrink: 0;">4</div>
+                            <div>
+                                <h6 class="fw-bold mb-1 mt-1">Compare Methods & Review</h6>
+                                <p class="small text-muted mb-0">View comprehensive agreement analysis and side-by-side performance metrics.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.workflow-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 10px;
+    height: calc(100% - 20px);
+    width: 2px;
+    background-color: #e9ecef;
+    z-index: 0;
+}
+.workflow-step { position: relative; }
+</style>
+<%- include('partials/footer') %>

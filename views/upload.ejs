@@ -1,0 +1,132 @@
+<%- include('partials/header') %>
+
+<div class="row justify-content-center">
+  <div class="col-md-9 col-lg-8 col-xl-7">
+    <div class="card shadow-md border-0 mt-2 mb-4">
+      <div class="card-header py-3 text-center">
+        <h4 class="mb-0 fw-bold text-white d-flex align-items-center justify-content-center gap-2">
+          <i class="fas fa-lungs" style="color: #14b8a6;"></i>
+          <span>Upload Chest X-Ray & Analyze</span>
+        </h4>
+        <p class="text-light opacity-75 small mb-0 mt-1">Dual-method detection: Traditional DIP + Deep Learning (DenseNet121)</p>
+      </div>
+
+      <div class="card-body p-4 p-md-5">
+        <form action="/scan/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+          <!-- File Input Drop Zone -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-secondary d-flex justify-content-between align-items-center">
+              <span>Patient Chest X-Ray Image <span class="text-danger">*</span></span>
+              <span class="extra-small text-muted" style="font-size: 0.8rem;">Formats: JPEG, PNG, JPG (PA/AP view)</span>
+            </label>
+
+            <div class="dropzone-box p-4 p-md-5 text-center cursor-pointer position-relative" id="dropZone">
+              <input type="file" name="xrayImage" class="form-control position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" 
+                     accept="image/*" required id="xrayInput" style="z-index: 5;">
+              <div class="py-2" id="dropZoneContent">
+                <div class="stat-icon-wrapper bg-teal-subtle text-teal mx-auto mb-3" style="width: 64px; height: 64px; background-color: rgba(20, 184, 166, 0.12) !important; color: #14b8a6 !important; font-size: 1.8rem;">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Drag & Drop Chest X-Ray image here</h5>
+                <p class="text-muted small mb-0">or click to select file from your computer</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- File Metadata & Preview Area -->
+          <div class="mb-4" id="previewContainer" style="display:none;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="form-label fw-bold text-secondary mb-0">Selected Scan Preview</span>
+              <div id="fileMetaInfo"></div>
+            </div>
+            <div class="position-relative text-center p-3 border rounded-3 bg-light">
+              <img id="preview" src="#" class="img-fluid rounded shadow-sm max-h-72" style="max-height: 280px; object-fit: contain;">
+              <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center" 
+                      id="removePreviewBtn" style="width: 34px; height: 34px; padding: 0;" title="Remove file">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Diagnostic Engine Notice -->
+          <div class="alert alert-info border-0 rounded-3 shadow-sm mb-4 d-flex align-items-center gap-3">
+            <i class="fas fa-info-circle text-info fs-4"></i>
+            <div class="small">
+              <strong>Automated Multi-Method Analysis:</strong> Both <strong>Traditional Image Processing</strong> (feature extraction & thresholding) and <strong>Deep Learning CNN</strong> (DenseNet121 with Grad-CAM) will execute simultaneously for comparison.
+            </div>
+          </div>
+
+          <!-- Clinical Context Accordion (Optional) -->
+          <div class="accordion mb-4" id="clinicalAccordion">
+            <div class="accordion-item border rounded-3 overflow-hidden">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed py-2.5 px-3 bg-light fw-bold text-secondary small" type="button" data-bs-toggle="collapse" data-bs-target="#clinicalCollapse">
+                  <i class="fas fa-notes-medical me-2 text-teal" style="color: #14b8a6;"></i> Optional Clinical Context / Acquisition Information
+                </button>
+              </h2>
+              <div id="clinicalCollapse" class="accordion-collapse collapse" data-bs-parent="#clinicalAccordion">
+                <div class="accordion-body p-3">
+                  <div class="mb-3">
+                    <label class="form-label extra-small fw-bold text-secondary">Reported Symptoms</label>
+                    <textarea name="symptoms" class="form-control form-control-sm" rows="2" placeholder="e.g. Cough, high fever, dyspnea, pleuritic chest pain..."></textarea>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                      <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="recentHospitalization" id="hospCheck">
+                        <label class="form-check-label extra-small fw-semibold text-secondary" for="hospCheck">Recent Hospitalization</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label extra-small fw-bold text-secondary mb-1">Time Since Admission</label>
+                      <select name="timeSinceAdmission" class="form-select form-select-sm">
+                        <option value="N/A">N/A (Outpatient / Community)</option>
+                        <option value="<48h">&lt; 48 hours</option>
+                        <option value="48h-5d">48 hours - 5 days</option>
+                        <option value=">5d">&gt; 5 days</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="mechanicalVentilation" id="ventCheck">
+                        <label class="form-check-label extra-small fw-semibold text-secondary" for="ventCheck">Mechanical Ventilation</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="aspirationHistory" id="aspCheck">
+                        <label class="form-check-label extra-small fw-semibold text-secondary" for="aspCheck">Aspiration History / Risk</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="form-label extra-small fw-bold text-secondary">Additional Notes</label>
+                    <input type="text" name="otherInfo" class="form-control form-control-sm" placeholder="Comorbidities, view projection, oxygen saturation...">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Action Submit Button -->
+          <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-md mb-3">
+            <i class="fas fa-microscope"></i>
+            <span>Upload and Analyze Chest X-Ray</span>
+          </button>
+        </form>
+
+        <!-- Medical Disclaimer -->
+        <div class="alert alert-warning border-0 rounded-3 shadow-sm d-flex align-items-start gap-2 mb-0" style="font-size: 0.8rem;">
+          <i class="fas fa-exclamation-triangle text-warning mt-0.5"></i>
+          <div>
+            <strong>Medical Disclaimer:</strong> This platform is designed for research, educational, and computational comparison purposes. Results must not replace professional clinical diagnosis.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

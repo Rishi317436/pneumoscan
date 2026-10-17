@@ -1,0 +1,10 @@
+/* Base styles */
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+.navbar-brand {
+  font-weight: bold;
+}
+.card {
+  border-radius: 10px;
+}

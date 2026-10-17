@@ -1,0 +1,33 @@
+{
+    "manual_metrics": {
+        "accuracy": 0.375,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "sensitivity": 0.0,
+        "specificity": 1.0,
+        "confusion_matrix": {
+            "tn": 234,
+            "fp": 0,
+            "fn": 390,
+            "tp": 0
+        }
+    },
+    "ml_metrics": {
+        "accuracy": 0.891,
+        "precision": 0.8562,
+        "recall": 0.9923,
+        "f1": 0.9192,
+        "roc_auc": 0.9618,
+        "sensitivity": 0.9923,
+        "specificity": 0.7222,
+        "confusion_matrix": {
+            "tn": 169,
+            "fp": 65,
+            "fn": 3,
+            "tp": 387
+        }
+    },
+    "agreement_rate": 0.2756,
+    "total_samples": 624
+}

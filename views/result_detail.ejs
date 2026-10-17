@@ -1,0 +1,329 @@
+<%- include('partials/header') %>
+
+<% const detection = typeof result !== 'undefined' && result ? result : (typeof report !== 'undefined' && report && report.detectionId ? report.detectionId : null); %>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="/scan/results" class="btn btn-outline-secondary btn-sm py-0.5 px-2"><i class="fas fa-arrow-left me-1"></i>Back</a>
+      <h2 class="fw-extrabold text-dark mb-0 d-flex align-items-center gap-2">
+        <i class="fas fa-file-medical-alt text-teal" style="color: #14b8a6;"></i>
+        <span>Pneumonia Multi-Method Analysis Report</span>
+      </h2>
+    </div>
+    <p class="text-muted small mb-0">Comprehensive evaluation comparing Traditional DIP vs Deep Learning with Grad-CAM visualization.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5">
+      <i class="fas fa-print"></i> Print Report
+    </button>
+    <a href="/scan/upload" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1.5 shadow-sm">
+      <i class="fas fa-plus"></i> New Analysis
+    </a>
+  </div>
+</div>
+
+<% if(detection){ %>
+<!-- Image Previews & Overview Card -->
+<div class="card shadow-md border-0 mb-4 overflow-hidden">
+  <div class="card-header py-3 text-white d-flex align-items-center justify-content-between">
+    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+      <i class="fas fa-microscope" style="color: #14b8a6;"></i>
+      <span>Diagnostic Imagery Overview</span>
+    </h5>
+    <span class="badge bg-teal-subtle text-teal border border-teal-subtle">
+      <i class="fas fa-clock me-1"></i><%= new Date(detection.createdAt || Date.now()).toLocaleDateString() %>
+    </span>
+  </div>
+  <div class="card-body p-4">
+    <div class="row g-4 text-center justify-content-center">
+      <div class="col-md-5">
+        <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column align-items-center">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-image me-1 text-primary"></i> Patient Chest X-Ray</h6>
+          <% 
+            let origPath = detection.originalImage || '';
+            let origUrl = '/' + origPath.replace(/\\/g, '/');
+            if(origUrl.startsWith('//')) origUrl = origUrl.substring(1);
+          %>
+          <img src="<%= origUrl %>" alt="Original X-Ray" class="img-fluid rounded shadow-sm my-auto" style="max-height: 260px; object-fit: contain;">
+          <small class="text-muted mt-2 extra-small"><%= detection.scanId ? detection.scanId.filename : 'Input Radiograph' %></small>
+        </div>
+      </div>
+      
+      <div class="col-md-5">
+        <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column align-items-center">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-fire-alt me-1 text-danger"></i> Grad-CAM AI Attention Overlay</h6>
+          <% if(detection.gradcamImage){ 
+               let gradcamUrl = '/' + detection.gradcamImage.replace(/\\/g, '/');
+               if(gradcamUrl.startsWith('//')) gradcamUrl = gradcamUrl.substring(1);
+          %>
+            <img src="<%= gradcamUrl %>" alt="Grad-CAM Overlay" class="img-fluid rounded shadow-sm my-auto" style="max-height: 260px; object-fit: contain;">
+            <small class="text-muted mt-2 extra-small">Heatmap highlighting neural network focus areas</small>
+          <% } else { %>
+            <div class="my-auto py-5 text-muted">
+              <i class="fas fa-eye-slash fs-2 mb-2"></i>
+              <p class="mb-0 extra-small">Grad-CAM visualization generated during model inference</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Three Column / Three Method Cards Grid -->
+<div class="row g-4 mb-4">
+  <!-- Section 1: Traditional Image Processing -->
+  <div class="col-lg-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header py-3 bg-dark text-white">
+        <h6 class="mb-0 fw-bold d-flex align-items-center justify-content-between">
+          <span><i class="fas fa-cogs me-1 text-teal" style="color: #14b8a6;"></i> Method 1: Traditional DIP</span>
+          <span class="badge bg-secondary extra-small">Heuristic/GLCM</span>
+        </h6>
+      </div>
+      <div class="card-body p-3.5 d-flex flex-column">
+        <div class="text-center mb-3 p-3 bg-light rounded-3">
+          <span class="text-secondary extra-small text-uppercase fw-bold d-block mb-1">Traditional Prediction</span>
+          <% if(detection.manualDetection && detection.manualDetection.prediction === 'PNEUMONIA'){ %>
+            <span class="badge bg-danger px-3 py-2 fs-6"><i class="fas fa-exclamation-triangle me-1"></i> PNEUMONIA</span>
+          <% } else if(detection.manualDetection && detection.manualDetection.prediction === 'NORMAL') { %>
+            <span class="badge bg-success px-3 py-2 fs-6"><i class="fas fa-check-circle me-1"></i> NORMAL</span>
+          <% } else { %>
+            <span class="badge bg-secondary px-3 py-2 fs-6">N/A</span>
+          <% } %>
+          
+          <div class="mt-3 text-start">
+            <div class="d-flex justify-content-between extra-small fw-bold text-secondary mb-1">
+              <span>Opacity / Infiltration Score</span>
+              <span><%= detection.manualDetection && typeof detection.manualDetection.score === 'number' ? detection.manualDetection.score.toFixed(1) + '%' : 'N/A' %></span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar <%= (detection.manualDetection && detection.manualDetection.prediction === 'PNEUMONIA') ? 'bg-danger' : 'bg-success' %>" 
+                   style="width: <%= detection.manualDetection ? (detection.manualDetection.score || 0) : 0 %>%"></div>
+            </div>
+          </div>
+        </div>
+
+        <h6 class="fw-bold text-dark extra-small text-uppercase mb-2"><i class="fas fa-list-ul me-1 text-teal"></i> Extracted DIP Features</h6>
+        <div class="table-responsive border rounded-2 mb-3">
+          <table class="table table-sm table-striped mb-0 extra-small">
+            <tbody>
+              <% if(detection.manualDetection && detection.manualDetection.features){ 
+                   const f = detection.manualDetection.features; %>
+                <tr><td class="text-secondary">Mean Intensity</td><td class="text-end fw-bold"><%= typeof f.mean_intensity === 'number' ? f.mean_intensity.toFixed(2) : (f.mean_intensity || '-') %></td></tr>
+                <tr><td class="text-secondary">Standard Dev</td><td class="text-end fw-bold"><%= typeof f.std_dev === 'number' ? f.std_dev.toFixed(2) : (f.std_dev || '-') %></td></tr>
+                <tr><td class="text-secondary">Entropy</td><td class="text-end fw-bold"><%= typeof f.entropy === 'number' ? f.entropy.toFixed(3) : (f.entropy || '-') %></td></tr>
+                <tr><td class="text-secondary">Edge Density</td><td class="text-end fw-bold"><%= typeof f.edge_density === 'number' ? (f.edge_density * 100).toFixed(2) + '%' : (f.edge_density || '-') %></td></tr>
+                <tr><td class="text-secondary">LBP Mean</td><td class="text-end fw-bold"><%= typeof f.lbp_mean === 'number' ? f.lbp_mean.toFixed(2) : (f.lbp_mean || '-') %></td></tr>
+                <tr><td class="text-secondary">GLCM Contrast</td><td class="text-end fw-bold"><%= typeof f.glcm_contrast === 'number' ? f.glcm_contrast.toFixed(2) : (f.glcm_contrast || '-') %></td></tr>
+                <tr><td class="text-secondary">GLCM Homogeneity</td><td class="text-end fw-bold"><%= typeof f.glcm_homogeneity === 'number' ? f.glcm_homogeneity.toFixed(3) : (f.glcm_homogeneity || '-') %></td></tr>
+                <tr><td class="text-secondary">Uniformity</td><td class="text-end fw-bold"><%= typeof f.uniformity === 'number' ? f.uniformity.toFixed(4) : (f.uniformity || '-') %></td></tr>
+              <% } else { %>
+                <tr><td colspan="2" class="text-center text-muted py-2">No feature metrics recorded</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <% if(detection.manualDetection && detection.manualDetection.decisionExplanation){ %>
+          <div class="p-2.5 bg-light border rounded-2 mb-2 extra-small text-secondary fst-italic">
+            <strong>Decision Logic:</strong> <%= detection.manualDetection.decisionExplanation %>
+          </div>
+        <% } %>
+        <p class="extra-small text-muted mt-auto mb-0"><i class="fas fa-info-circle me-1"></i>Experimental image-processing baseline based on calibrated training set thresholds.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Deep Learning Neural Network -->
+  <div class="col-lg-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header py-3 bg-dark text-white">
+        <h6 class="mb-0 fw-bold d-flex align-items-center justify-content-between">
+          <span><i class="fas fa-robot me-1 text-teal" style="color: #14b8a6;"></i> Method 2: Machine Learning</span>
+          <span class="badge bg-teal-subtle text-teal border border-teal-subtle extra-small">DenseNet121</span>
+        </h6>
+      </div>
+      <div class="card-body p-3.5 d-flex flex-column">
+        <div class="text-center mb-3 p-3 bg-light rounded-3">
+          <span class="text-secondary extra-small text-uppercase fw-bold d-block mb-1">Deep Learning Prediction</span>
+          <% if(detection.mlDetection && detection.mlDetection.prediction === 'PNEUMONIA'){ %>
+            <span class="badge bg-danger px-3 py-2 fs-6"><i class="fas fa-robot me-1"></i> PNEUMONIA</span>
+          <% } else if(detection.mlDetection && detection.mlDetection.prediction === 'NORMAL') { %>
+            <span class="badge bg-success px-3 py-2 fs-6"><i class="fas fa-check-circle me-1"></i> NORMAL</span>
+          <% } else { %>
+            <span class="badge bg-secondary px-3 py-2 fs-6">N/A</span>
+          <% } %>
+          
+          <div class="mt-3 text-start">
+            <% 
+              let confVal = 0;
+              if(detection.mlDetection && typeof detection.mlDetection.confidence === 'number'){
+                confVal = detection.mlDetection.confidence <= 1 ? (detection.mlDetection.confidence * 100) : detection.mlDetection.confidence;
+              }
+            %>
+            <div class="d-flex justify-content-between extra-small fw-bold text-secondary mb-1">
+              <span>Model Confidence</span>
+              <span><%= confVal.toFixed(1) %>%</span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar <%= (detection.mlDetection && detection.mlDetection.prediction === 'PNEUMONIA') ? 'bg-danger' : 'bg-success' %>" 
+                   style="width: <%= confVal %>%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 border rounded-3 bg-light mb-3">
+          <h6 class="fw-bold text-dark extra-small text-uppercase mb-2"><i class="fas fa-network-wired me-1 text-primary"></i> Neural Architecture Specs</h6>
+          <ul class="list-unstyled extra-small mb-0 text-secondary d-flex flex-column gap-1.5">
+            <li><strong>Model Architecture:</strong> DenseNet-121 Transfer Learning</li>
+            <li><strong>Input Dimension:</strong> 224 &times; 224 RGB Normalized</li>
+            <li><strong>Model Version:</strong> <%= (detection.mlDetection && detection.mlDetection.modelVersion) || 'v1.0' %></li>
+            <li><strong>Explainability:</strong> Grad-CAM Convolutional Activations</li>
+          </ul>
+        </div>
+
+        <div class="p-2.5 bg-teal-subtle text-teal border border-teal-subtle rounded-2 mt-auto extra-small">
+          <i class="fas fa-bullseye me-1"></i> <strong>Attention Map Note:</strong> Grad-CAM highlights specific thoracic regions driving the CNN classification decision.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Comparative Agreement Analysis -->
+  <div class="col-lg-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header py-3 bg-dark text-white">
+        <h6 class="mb-0 fw-bold d-flex align-items-center justify-content-between">
+          <span><i class="fas fa-balance-scale me-1 text-teal" style="color: #14b8a6;"></i> Method Comparison</span>
+          <span class="badge bg-primary extra-small">Multi-Analysis</span>
+        </h6>
+      </div>
+      <div class="card-body p-3.5 d-flex flex-column">
+        <div class="text-center mb-3 p-3 bg-light rounded-3">
+          <span class="text-secondary extra-small text-uppercase fw-bold d-block mb-1">Agreement Status</span>
+          <% if(detection.comparison && detection.comparison.agreementStatus === 'AGREE'){ %>
+            <div class="badge bg-success text-white px-3 py-2 fs-6 mb-1"><i class="fas fa-check-circle me-1"></i> METHODS AGREE</div>
+            <p class="extra-small text-success mb-0 mt-1">Both traditional and ML methods arrived at the same diagnostic conclusion.</p>
+          <% } else if(detection.comparison && detection.comparison.agreementStatus === 'DISAGREE') { %>
+            <div class="badge bg-warning text-dark px-3 py-2 fs-6 mb-1"><i class="fas fa-exclamation-triangle me-1"></i> METHODS DISAGREE</div>
+            <p class="extra-small text-secondary mb-0 mt-1">The methods produced different results. Additional clinical review may be required.</p>
+          <% } else { %>
+            <span class="badge bg-secondary px-3 py-2 fs-6">Pending Comparison</span>
+          <% } %>
+        </div>
+
+        <div class="table-responsive border rounded-2 mb-3">
+          <table class="table table-sm table-bordered text-center align-middle mb-0 extra-small">
+            <thead class="table-light">
+              <tr>
+                <th class="text-start ps-2">Method</th>
+                <th>Result</th>
+                <th>Confidence/Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-start ps-2 fw-semibold">Traditional DIP</td>
+                <td>
+                  <% if(detection.manualDetection && detection.manualDetection.prediction === 'PNEUMONIA'){ %>
+                    <span class="badge bg-danger-subtle text-danger">Pneumonia</span>
+                  <% } else { %>
+                    <span class="badge bg-success-subtle text-success">Normal</span>
+                  <% } %>
+                </td>
+                <td><%= detection.manualDetection && typeof detection.manualDetection.score === 'number' ? detection.manualDetection.score.toFixed(1) + '%' : '-' %></td>
+              </tr>
+              <tr>
+                <td class="text-start ps-2 fw-semibold">DenseNet121</td>
+                <td>
+                  <% if(detection.mlDetection && detection.mlDetection.prediction === 'PNEUMONIA'){ %>
+                    <span class="badge bg-danger-subtle text-danger">Pneumonia</span>
+                  <% } else { %>
+                    <span class="badge bg-success-subtle text-success">Normal</span>
+                  <% } %>
+                </td>
+                <td><%= confVal.toFixed(1) %>%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="p-3 border rounded-3 bg-light mb-3">
+          <% 
+            let diffVal = detection.comparison && typeof detection.comparison.scoreDifference === 'number' ? (detection.comparison.scoreDifference * 100).toFixed(1) : '0.0';
+            let combVal = detection.comparison && typeof detection.comparison.experimentalCombinedScore === 'number' ? (detection.comparison.experimentalCombinedScore * 100).toFixed(1) : '0.0';
+          %>
+          <div class="d-flex justify-content-between align-items-center mb-2 extra-small">
+            <span class="text-secondary fw-semibold">Score Difference:</span>
+            <span class="fw-bold text-dark"><%= diffVal %>%</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center extra-small">
+            <span class="text-secondary fw-semibold" title="Formula: 0.3 * Manual + 0.7 * ML">Combined Research Score:</span>
+            <span class="badge bg-teal text-white fw-bold" style="background-color: #0d9488;"><%= combVal %>%</span>
+          </div>
+        </div>
+
+        <p class="extra-small text-muted mt-auto mb-0"><i class="fas fa-atom me-1"></i>Combined score is an experimental weighted research index combining spatial feature analysis and neural probability.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Clinical Information (If provided) -->
+<% if(detection.clinicalInformation && (detection.clinicalInformation.symptoms || detection.clinicalInformation.recentHospitalization || detection.clinicalInformation.timeSinceAdmission !== 'N/A' || detection.clinicalInformation.mechanicalVentilation || detection.clinicalInformation.aspirationHistory || detection.clinicalInformation.otherInfo)){ %>
+<div class="card shadow-sm border-0 mb-4 overflow-hidden">
+  <div class="card-header py-3 bg-secondary text-white">
+    <h6 class="mb-0 fw-bold"><i class="fas fa-notes-medical me-2"></i>Recorded Clinical Context</h6>
+  </div>
+  <div class="card-body p-4">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <h6 class="fw-bold text-dark small mb-1">Symptoms & Clinical Presentation</h6>
+        <p class="text-secondary small mb-2"><%= detection.clinicalInformation.symptoms || 'None recorded' %></p>
+        <% if(detection.clinicalInformation.otherInfo){ %>
+          <h6 class="fw-bold text-dark small mb-1">Additional Notes</h6>
+          <p class="text-secondary small mb-0"><%= detection.clinicalInformation.otherInfo %></p>
+        <% } %>
+      </div>
+      <div class="col-md-6">
+        <h6 class="fw-bold text-dark small mb-2">Hospitalization & Risk Factors</h6>
+        <div class="d-flex flex-wrap gap-2">
+          <% if(detection.clinicalInformation.recentHospitalization){ %><span class="badge bg-warning text-dark"><i class="fas fa-hospital me-1"></i> Recent Hospitalization</span><% } %>
+          <% if(detection.clinicalInformation.timeSinceAdmission && detection.clinicalInformation.timeSinceAdmission !== 'N/A'){ %><span class="badge bg-info text-dark">Admission: <%= detection.clinicalInformation.timeSinceAdmission %></span><% } %>
+          <% if(detection.clinicalInformation.mechanicalVentilation){ %><span class="badge bg-danger"><i class="fas fa-lungs me-1"></i> Mechanical Ventilation</span><% } %>
+          <% if(detection.clinicalInformation.aspirationHistory){ %><span class="badge bg-danger"><i class="fas fa-procedures me-1"></i> Aspiration Risk/History</span><% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Medical Disclaimer Banner -->
+<div class="alert alert-warning border-0 shadow-sm p-3.5 mb-4 rounded-3 d-flex align-items-start gap-3">
+  <i class="fas fa-exclamation-triangle text-warning fs-3 mt-1"></i>
+  <div>
+    <h6 class="fw-bold text-dark mb-1">Important Medical & Regulatory Disclaimer</h6>
+    <p class="text-secondary small mb-1">
+      This system is an AI-based research and educational project. Traditional image-processing results and machine learning predictions <strong>should not be considered a substitute for professional medical diagnosis</strong>, clinical examination, microbiological testing, or clinical treatment planning.
+    </p>
+    <p class="text-muted extra-small mb-0">
+      The neural models and algorithmic thresholds are calibrated on the Kaggle Chest X-Ray dataset and may not generalize across all pediatric/adult age distributions, institutional imaging protocols, or hardware variations.
+    </p>
+  </div>
+</div>
+
+<% } else { %>
+<div class="card shadow-sm border-0 text-center py-5">
+  <div class="card-body">
+    <i class="fas fa-search mb-3 text-muted" style="font-size: 3rem;"></i>
+    <h5 class="fw-bold text-dark mb-1">Detection Record Not Found</h5>
+    <p class="text-muted small mb-3">The requested analysis details could not be located.</p>
+    <a href="/scan/results" class="btn btn-primary btn-sm">Return to Scan History</a>
+  </div>
+</div>
+<% } %>
+
+<%- include('partials/footer') %>

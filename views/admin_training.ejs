@@ -1,0 +1,156 @@
+<%- include('partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="/admin" class="btn btn-outline-secondary btn-sm py-0.5 px-2"><i class="fas fa-arrow-left me-1"></i>Admin</a>
+      <h2 class="fw-extrabold text-dark mb-0 d-flex align-items-center gap-2">
+        <i class="fas fa-cogs text-teal" style="color: #14b8a6;"></i>
+        <span>AI & DIP Model Training Hub</span>
+      </h2>
+    </div>
+    <p class="text-muted small mb-0">Monitor dataset status, calibrate traditional feature thresholds, and verify deep learning weights.</p>
+  </div>
+  <div>
+    <a href="/comparison" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5">
+      <i class="fas fa-balance-scale"></i> View Comparison Benchmark
+    </a>
+  </div>
+</div>
+
+<!-- Dataset & Calibration Status Grid -->
+<div class="row g-4 mb-4">
+  <!-- Dataset Info Card -->
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header py-3 bg-dark text-white d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-database me-2 text-teal"></i>Chest X-Ray Dataset</h6>
+        <% if(statusInfo && statusInfo.datasetExists){ %>
+          <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Mounted</span>
+        <% } else { %>
+          <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> Local Path Configured</span>
+        <% } %>
+      </div>
+      <div class="card-body p-4">
+        <p class="text-secondary small mb-3">
+          The system utilizes the Kaggle Chest X-Ray Images (Pneumonia) dataset partitioned into <code>train/</code>, <code>val/</code>, and <code>test/</code> directories containing <strong>NORMAL</strong> and <strong>PNEUMONIA</strong> subsets.
+        </p>
+
+        <div class="p-3 bg-light border rounded-3 mb-3 extra-small">
+          <div class="d-flex justify-content-between mb-1.5">
+            <span class="text-secondary fw-bold">Configured Path:</span>
+            <span class="font-monospace text-dark"><%= (statusInfo && statusInfo.datasetPath) || './chest_xray' %></span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-secondary fw-bold">Status:</span>
+            <span class="<%= (statusInfo && statusInfo.datasetExists) ? 'text-success fw-bold' : 'text-muted' %>">
+              <%= (statusInfo && statusInfo.datasetExists) ? 'Ready for Training & Benchmarking' : 'Download dataset to ./chest_xray' %>
+            </span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-dark text-white rounded-3 extra-small font-monospace">
+          <div class="text-muted mb-1"># CLI to train models:</div>
+          <div class="text-teal" style="color: #5eead4;">python dip_engine/train_binary_model.py</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Traditional Thresholds Calibration Card -->
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-header py-3 bg-dark text-white d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-sliders-h me-2 text-teal"></i>Traditional DIP Thresholds</h6>
+        <% if(statusInfo && statusInfo.thresholdsExists){ %>
+          <span class="badge bg-success"><i class="fas fa-check me-1"></i> Calibrated</span>
+        <% } else { %>
+          <span class="badge bg-danger"><i class="fas fa-times me-1"></i> Not Calibrated</span>
+        <% } %>
+      </div>
+      <div class="card-body p-4">
+        <p class="text-secondary small mb-3">
+          Statistical feature extraction (Mean, Entropy, LBP, GLCM, Edge Density) uses thresholds derived from the training set distribution to compute rule-based risk scores.
+        </p>
+
+        <div class="p-3 bg-light border rounded-3 mb-3 extra-small">
+          <div class="d-flex justify-content-between mb-1.5">
+            <span class="text-secondary fw-bold">Threshold File:</span>
+            <span class="font-monospace">dip_engine/models/manual_thresholds.json</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-secondary fw-bold">Evaluation Accuracy:</span>
+            <span class="fw-bold text-dark"><%= (statusInfo && statusInfo.manualMetrics && typeof statusInfo.manualMetrics.accuracy === 'number') ? (statusInfo.manualMetrics.accuracy * 100).toFixed(1) + '%' : 'Run calibration script' %></span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-dark text-white rounded-3 extra-small font-monospace">
+          <div class="text-muted mb-1"># CLI to calibrate traditional thresholds:</div>
+          <div class="text-teal" style="color: #5eead4;">python dip_engine/manual_training.py</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deep Learning Model Status Card -->
+<div class="row g-4 mb-4">
+  <div class="col-md-12">
+    <div class="card shadow-sm border-0">
+      <div class="card-header py-3 bg-dark text-white d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-network-wired me-2 text-teal"></i>Deep Learning Neural Network (DenseNet-121)</h6>
+        <% if(statusInfo && statusInfo.modelExists){ %>
+          <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Trained Weights Active</span>
+        <% } else { %>
+          <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half me-1"></i> Ready for Training</span>
+        <% } %>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="fw-bold text-dark small mb-2">Model Specifications & Hyperparameters</h6>
+            <ul class="list-unstyled extra-small text-secondary d-flex flex-column gap-2 mb-0">
+              <li><strong>Backbone:</strong> DenseNet-121 pre-trained on ImageNet</li>
+              <li><strong>Classification Head:</strong> GlobalAveragePooling2D + Dense(256, ReLU) + Dropout(0.5) + Sigmoid</li>
+              <li><strong>Loss Function:</strong> Binary Cross-Entropy with Class Weighting for Imbalance</li>
+              <li><strong>Optimization:</strong> Adam (lr=1e-4) with ReduceLROnPlateau & EarlyStopping</li>
+              <li><strong>Model Artifact:</strong> <code>dip_engine/models/pneumonia_binary_model.keras</code></li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold text-dark small mb-2">Validation / Test Performance Metrics</h6>
+            <% if(statusInfo && statusInfo.mlMetrics){ 
+                 const ml = statusInfo.mlMetrics; %>
+              <div class="row g-2 text-center">
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-light">
+                    <span class="text-muted extra-small d-block">Accuracy</span>
+                    <strong class="text-teal"><%= (ml.accuracy * 100).toFixed(1) %>%</strong>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-light">
+                    <span class="text-muted extra-small d-block">Precision</span>
+                    <strong class="text-teal"><%= (ml.precision * 100).toFixed(1) %>%</strong>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-light">
+                    <span class="text-muted extra-small d-block">Recall</span>
+                    <strong class="text-teal"><%= (ml.recall * 100).toFixed(1) %>%</strong>
+                  </div>
+                </div>
+              </div>
+            <% } else { %>
+              <div class="p-3 border rounded bg-light text-muted extra-small">
+                Metrics will populate automatically once <code>evaluate_model.py</code> or <code>train_binary_model.py</code> completes execution.
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

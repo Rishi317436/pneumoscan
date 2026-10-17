@@ -1,0 +1,79 @@
+<%- include('partials/header') %>
+<% const feedbackItems = (typeof feedbacks !== 'undefined' && Array.isArray(feedbacks)) ? feedbacks : []; %>
+
+<h2 class="fw-bold mb-4 text-dark"><i class="fas fa-comments me-2 text-primary"></i>Feedback & Reviews</h2>
+<div class="row">
+  <div class="col-md-5 mb-4">
+    <div class="card shadow-sm border-0" style="border-radius: 1rem;">
+      <div class="card-header bg-primary text-white py-3" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-pen-nib me-2"></i>Submit Feedback</h5>
+      </div>
+      <div class="card-body p-4">
+        <form action="/feedback" method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary">Rating</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="fas fa-star text-warning"></i></span>
+              <select name="rating" class="form-select bg-light" required>
+                <option value="5">5 Stars (Excellent)</option>
+                <option value="4">4 Stars (Good)</option>
+                <option value="3">3 Stars (Average)</option>
+                <option value="2">2 Stars (Poor)</option>
+                <option value="1">1 Star (Very Bad)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary">Comments</label>
+            <textarea name="comments" class="form-control bg-light" rows="4" placeholder="Share your experience or suggestions..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold" style="border-radius: 0.5rem; background-color: #0d9488 !important; border-color: #0d9488 !important;">Submit Feedback</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <h4 class="fw-bold mb-3 text-secondary"><i class="fas fa-history me-2"></i>Previous Feedbacks</h4>
+    <% if(feedbackItems && feedbackItems.length > 0){ %>
+      <% feedbackItems.forEach(f => { %>
+        <div class="card mb-3 shadow-sm border-0" style="border-radius: 1rem;">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-light text-primary fw-bold d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                  <i class="fas fa-user"></i>
+                </div>
+                <strong class="text-dark"><%= (typeof user !== 'undefined' && user && user.name) ? user.name : 'User' %></strong>
+              </div>
+              <div class="text-warning">
+                <% const r = Number(f.rating) || 5; %>
+                <% for(let i=0; i<5; i++) { %>
+                  <i class="fa<%= i < r ? 's' : 'r' %> fa-star"></i>
+                <% } %>
+              </div>
+            </div>
+            <p class="text-secondary mb-3"><%= f.comments || f.message || 'No comment provided.' %></p>
+            <% if(f.adminResponse){ %>
+              <div class="p-3 bg-light border-start border-primary border-3 rounded-end">
+                <div class="d-flex align-items-center mb-1">
+                  <i class="fas fa-user-shield text-primary me-2"></i>
+                  <span class="fw-bold text-dark small">Admin Response</span>
+                </div>
+                <p class="mb-0 text-secondary small"><%= f.adminResponse %></p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="card shadow-sm border-0 text-center py-5" style="border-radius: 1rem;">
+        <div class="card-body">
+          <i class="fas fa-comment-slash text-muted mb-3" style="font-size: 3rem;"></i>
+          <p class="text-muted mb-0">No feedback submitted yet. Be the first to share your thoughts!</p>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+<%- include('partials/footer') %>

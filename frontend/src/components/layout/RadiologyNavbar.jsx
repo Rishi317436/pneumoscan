@@ -1,0 +1,179 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useToast } from '../../context/ToastContext';
+
+const RadiologyNavbar = () => {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { addToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isLight = theme === 'light';
+  const [activeSection, setActiveSection] = useState('workstation');
+
+  // Track scroll position to update active section indicator with rAF throttling
+  useEffect(() => {
+    if (location.pathname !== '/workspace') return;
+
+    const sections = ['workstation', 'analytics', 'studies', 'feedback'];
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY + 200;
+
+          for (let i = sections.length - 1; i >= 0; i--) {
+            const el = document.getElementById(sections[i]);
+            if (el && el.offsetTop <= scrollPosition) {
+              setActiveSection((prev) => (prev !== sections[i] ? sections[i] : prev));
+              break;
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
+
+  const scrollToSection = (sectionId) => {
+    setActiveSection(sectionId);
+    if (location.pathname !== '/workspace') {
+      navigate(`/workspace#${sectionId}`);
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    } else {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    addToast('Logged out of PneumoScan Workspace', 'info');
+    navigate('/login');
+  };
+
+  return (
+    <header className="rad-header d-print-none">
+      <div className="container-fluid d-flex align-items-center justify-content-between px-lg-4">
+        {/* Brand */}
+        <Link className="rad-brand-logo" to={user ? "/workspace" : "/login"}>
+          <div className="rad-logo-icon">
+            <i className="fas fa-lungs"></i>
+          </div>
+          <div>
+            <span className="fw-extrabold text-white">Pneumo<span style={{ color: 'var(--rad-cyan, #39ff14)' }}>Scan</span></span>
+            <span className="text-secondary extra-small fw-semibold ms-2 d-none d-sm-inline" style={{ fontSize: '0.75rem', letterSpacing: '0.04em' }}>
+              CHEST X-RAY CAD & PACS
+            </span>
+          </div>
+        </Link>
+
+        {/* Navigation & Controls */}
+        {user ? (
+          <div className="d-flex align-items-center gap-2">
+            <nav className="d-none d-lg-flex align-items-center gap-1">
+              <button
+                type="button"
+                onClick={() => scrollToSection('workstation')}
+                className={`rad-nav-link border-0 bg-transparent cursor-pointer ${location.pathname === '/workspace' && activeSection === 'workstation' ? 'active' : ''}`}
+              >
+                <i className="fas fa-desktop"></i> Workstation
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollToSection('analytics')}
+                className={`rad-nav-link border-0 bg-transparent cursor-pointer ${location.pathname === '/workspace' && activeSection === 'analytics' ? 'active' : ''}`}
+              >
+                <i className="fas fa-chart-line"></i> Analytics
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollToSection('studies')}
+                className={`rad-nav-link border-0 bg-transparent cursor-pointer ${location.pathname === '/workspace' && activeSection === 'studies' ? 'active' : ''}`}
+              >
+                <i className="fas fa-list-alt"></i> Chest X-Rays
+              </button>
+
+
+              <button
+                type="button"
+                onClick={() => scrollToSection('feedback')}
+                className={`rad-nav-link border-0 bg-transparent cursor-pointer ${location.pathname === '/workspace' && activeSection === 'feedback' ? 'active' : ''}`}
+              >
+                <i className="fas fa-comment-medical"></i> Feedback
+              </button>
+
+              <Link
+                to="/profile"
+                className={`rad-nav-link ${location.pathname === '/profile' ? 'active' : ''}`}
+              >
+                <i className="fas fa-user-md"></i> Profile
+              </Link>
+
+              {user.role === 'admin' && (
+                <Link
+                  className={`rad-nav-link text-warning ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
+                  to="/admin/hub"
+                >
+                  <i className="fas fa-shield-alt"></i> Admin Hub
+                </Link>
+              )}
+            </nav>
+
+            <div className="vr d-none d-lg-block mx-2 opacity-25" style={{ height: '24px', backgroundColor: 'var(--rad-border)' }}></div>
+
+            {/* Instant Theme Toggle Pill */}
+            <button
+              onClick={toggleTheme}
+              className="glass-btn small"
+              title={isLight ? 'Switch to dark theme' : 'Switch to light theme'}
+              style={{ padding: '5px 10px' }}
+            >
+              <span>{isLight ? '☀ Light' : '☾ Dark'}</span>
+            </button>
+
+            {/* Clinician Pill */}
+            <div className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill glass-card" style={{ border: '1px solid var(--rad-border)' }}>
+              {user.profilePhoto ? (
+                <img
+                  src={user.profilePhoto}
+                  alt={user.name}
+                  className="rounded-circle"
+                  style={{ width: '22px', height: '22px', objectFit: 'cover', border: '1px solid var(--rad-cyan, #39ff14)' }}
+                />
+              ) : (
+                <span className="pulse-dot" style={{ backgroundColor: 'var(--rad-cyan, #39ff14)' }}></span>
+              )}
+              <span className="fw-bold text-white small">{user.name}</span>
+              <span className="badge extra-small text-uppercase" style={{ background: 'rgba(57, 255, 20, 0.15)', color: 'var(--rad-cyan, #39ff14)' }}>
+                {user.role}
+              </span>
+            </div>
+
+            <button onClick={handleLogout} className="glass-btn small" title="Log Out">
+              <i className="fas fa-power-off text-danger"></i>
+            </button>
+          </div>
+        ) : (
+          <div className="d-flex align-items-center gap-2">
+            <Link to="/login" className="glass-btn small">Sign In</Link>
+            <Link to="/register" className="glass-btn primary small">Onboard Clinician</Link>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default RadiologyNavbar;

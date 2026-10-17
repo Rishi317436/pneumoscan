@@ -1,0 +1,175 @@
+<%- include('partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h2 class="fw-extrabold text-dark mb-1 d-flex align-items-center gap-2">
+      <i class="fas fa-balance-scale text-teal" style="color: #14b8a6;"></i>
+      <span>Dataset-Level Method Comparison</span>
+    </h2>
+    <p class="text-muted small mb-0">Empirical benchmarking of Traditional DIP vs DenseNet-121 on the Kaggle Chest X-Ray test cohort.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="/scan/upload" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1.5 shadow-sm">
+      <i class="fas fa-microscope"></i> Live Analysis
+    </a>
+  </div>
+</div>
+
+<% if(typeof comparisonData !== 'undefined' && comparisonData){ %>
+<!-- Top Performance Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-0 stat-card-primary">
+      <div class="card-body p-3">
+        <span class="text-secondary extra-small fw-bold text-uppercase d-block mb-1">Traditional Method Accuracy</span>
+        <h3 class="fw-extrabold text-dark mb-0">
+          <%= comparisonData.manual_metrics && typeof comparisonData.manual_metrics.accuracy === 'number' ? (comparisonData.manual_metrics.accuracy * 100).toFixed(1) + '%' : 'N/A' %>
+        </h3>
+        <small class="text-muted extra-small">Calibrated feature thresholding</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-0 stat-card-success">
+      <div class="card-body p-3">
+        <span class="text-secondary extra-small fw-bold text-uppercase d-block mb-1">DenseNet121 CNN Accuracy</span>
+        <h3 class="fw-extrabold text-success mb-0">
+          <%= comparisonData.ml_metrics && typeof comparisonData.ml_metrics.accuracy === 'number' ? (comparisonData.ml_metrics.accuracy * 100).toFixed(1) + '%' : 'N/A' %>
+        </h3>
+        <small class="text-muted extra-small">Transfer learning on chest radiographs</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-0 stat-card-warning">
+      <div class="card-body p-3">
+        <span class="text-secondary extra-small fw-bold text-uppercase d-block mb-1">Method Agreement Rate</span>
+        <h3 class="fw-extrabold text-teal mb-0" style="color: #0d9488;">
+          <%= typeof comparisonData.agreement_rate === 'number' ? (comparisonData.agreement_rate * 100).toFixed(1) + '%' : (comparisonData.agreement_rate || 'N/A') %>
+        </h3>
+        <small class="text-muted extra-small">Cohort concordance between methods</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Metrics Comparison Table -->
+<div class="card shadow-sm border-0 mb-4 overflow-hidden">
+  <div class="card-header py-3 bg-dark text-white d-flex align-items-center justify-content-between">
+    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+      <i class="fas fa-table" style="color: #14b8a6;"></i>
+      <span>Statistical Benchmark Metrics</span>
+    </h5>
+    <span class="badge bg-teal-subtle text-teal border border-teal-subtle">Test Partition</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered align-middle mb-0 text-center">
+        <thead class="table-light extra-small text-uppercase">
+          <tr>
+            <th class="text-start ps-4">Diagnostic Metric</th>
+            <th>Traditional DIP Engine</th>
+            <th>DenseNet-121 Neural Network</th>
+            <th>Performance Delta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% 
+            const m = comparisonData.manual_metrics || {};
+            const ml = comparisonData.ml_metrics || {};
+            const metricsList = [
+              { name: 'Classification Accuracy', mKey: 'accuracy', mlKey: 'accuracy' },
+              { name: 'Precision (PPV)', mKey: 'precision', mlKey: 'precision' },
+              { name: 'Recall / Sensitivity (TPR)', mKey: 'recall', mlKey: 'recall' },
+              { name: 'Specificity (TNR)', mKey: 'specificity', mlKey: 'specificity' },
+              { name: 'F1-Score', mKey: 'f1', mlKey: 'f1' },
+              { name: 'ROC-AUC Score', mKey: 'roc_auc', mlKey: 'roc_auc' }
+            ];
+          %>
+          <% metricsList.forEach(item => { 
+               const mVal = typeof m[item.mKey] === 'number' ? (m[item.mKey] * 100) : null;
+               const mlVal = typeof ml[item.mlKey] === 'number' ? (ml[item.mlKey] * 100) : null;
+               const delta = (mVal !== null && mlVal !== null) ? (mlVal - mVal) : null;
+          %>
+            <tr>
+              <td class="text-start ps-4 fw-bold text-dark"><%= item.name %></td>
+              <td><%= mVal !== null ? mVal.toFixed(2) + '%' : '-' %></td>
+              <td class="fw-bold text-teal" style="color: #0d9488;"><%= mlVal !== null ? mlVal.toFixed(2) + '%' : '-' %></td>
+              <td>
+                <% if(delta !== null){ %>
+                  <% if(delta > 0){ %>
+                    <span class="badge bg-success-subtle text-success">+<%= delta.toFixed(2) %>% (ML Higher)</span>
+                  <% } else if(delta < 0) { %>
+                    <span class="badge bg-warning-subtle text-warning"><%= delta.toFixed(2) %>% (DIP Higher)</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary-subtle text-secondary">0.00%</span>
+                  <% } %>
+                <% } else { %>
+                  -
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Charts and Visualizations -->
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm border-0 text-center p-3">
+      <div class="card-body d-flex flex-column align-items-center">
+        <h6 class="fw-bold text-dark mb-3"><i class="fas fa-chart-bar text-primary me-1"></i> Multi-Metric Comparison Chart</h6>
+        <img src="/results/comparison_chart.png" alt="Performance Comparison Chart" class="img-fluid rounded shadow-sm my-auto" onerror="this.parentElement.innerHTML='<p class=\'text-muted my-5 small\'><i class=\'fas fa-image fs-3 mb-2\'></i><br>Run python dip_engine/compare_methods.py to generate visual charts</p>'">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm border-0 text-center p-3">
+      <div class="card-body d-flex flex-column align-items-center">
+        <h6 class="fw-bold text-dark mb-3"><i class="fas fa-th text-teal me-1"></i> Confusion Matrices (Test Cohort)</h6>
+        <div class="row g-2 w-100 my-auto">
+          <div class="col-6">
+            <small class="text-secondary fw-bold d-block mb-1">Traditional DIP</small>
+            <img src="/results/manual_confusion_matrix.png" alt="Traditional Confusion Matrix" class="img-fluid rounded shadow-sm" onerror="this.style.display='none'">
+          </div>
+          <div class="col-6">
+            <small class="text-secondary fw-bold d-block mb-1">DenseNet-121 CNN</small>
+            <img src="/results/ml_confusion_matrix.png" alt="ML Confusion Matrix" class="img-fluid rounded shadow-sm" onerror="this.style.display='none'">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% } else { %>
+<!-- Empty State / Instructions to Run Script -->
+<div class="card shadow-sm border-0 text-center py-5 mb-4">
+  <div class="card-body p-4 p-md-5">
+    <div class="stat-icon-wrapper bg-primary-subtle text-primary mx-auto mb-3" style="width: 72px; height: 72px; font-size: 2rem;">
+      <i class="fas fa-balance-scale"></i>
+    </div>
+    <h4 class="fw-bold text-dark mb-2">No Dataset Comparison Data Available</h4>
+    <p class="text-secondary max-w-lg mx-auto mb-4 small leading-relaxed">
+      The dataset-level benchmarking script evaluates both the traditional digital image processing heuristics and the deep learning neural network on the Kaggle chest X-ray test set.
+    </p>
+
+    <div class="p-3 bg-dark text-white rounded-3 d-inline-block text-start mb-4 shadow-sm" style="max-width: 500px; font-family: monospace; font-size: 0.85rem;">
+      <div class="text-muted extra-small mb-1"># Run comparison benchmark via terminal:</div>
+      <div class="text-teal" style="color: #5eead4;">python dip_engine/compare_methods.py</div>
+    </div>
+
+    <div>
+      <a href="/dashboard" class="btn btn-outline-primary btn-sm px-4 py-2">Return to Dashboard</a>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<%- include('partials/footer') %>

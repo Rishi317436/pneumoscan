@@ -1,0 +1,18 @@
+{
+    "accuracy": 0.8942,
+    "precision": 0.86,
+    "recall": 0.9923,
+    "f1": 0.9214,
+    "roc_auc": 0.9611,
+    "sensitivity": 0.9923,
+    "specificity": 0.7308,
+    "confusion_matrix": {
+        "true_negative": 171,
+        "false_positive": 63,
+        "false_negative": 3,
+        "true_positive": 387
+    },
+    "total_test_samples": 624,
+    "test_normal_count": 234,
+    "test_pneumonia_count": 390
+}

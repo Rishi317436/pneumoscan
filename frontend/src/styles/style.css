@@ -1,0 +1,13 @@
+/* Base styles */
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+.navbar-brand {
+  font-weight: bold;
+}
+.card {
+  border-radius: 10px;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
