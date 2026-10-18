@@ -55,6 +55,26 @@ const InteractiveXrayViewer = ({
 
   const handleMouseUp = () => setIsDragging(false);
 
+  // Mobile Touchscreen Pan Support
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length === 1) {
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setDragStart({ x: touch.clientX - pan.x, y: touch.clientY - pan.y });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || !e.touches || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setPan({
+      x: touch.clientX - dragStart.x,
+      y: touch.clientY - dragStart.y
+    });
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
+
   const filterStyle = `contrast(${contrast}%) brightness(${brightness}%) ${invert ? 'invert(100%) hue-rotate(180deg)' : ''}`;
 
   return (
@@ -129,7 +149,11 @@ const InteractiveXrayViewer = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab', minHeight: '440px', position: 'relative' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab', minHeight: '360px', position: 'relative', touchAction: 'none' }}
       >
         {origUrl ? (
           <div
