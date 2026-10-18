@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 const ChestXrayDetectionSchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
     scanId: { type: mongoose.Schema.Types.ObjectId, ref: 'ChestXrayScan', index: true },
     originalImage: { type: String, required: true },
     processedImage: { type: String },
@@ -42,8 +43,21 @@ const ChestXrayDetectionSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now, index: true }
 });
 
+ChestXrayDetectionSchema.pre('validate', function(next) {
+    if (this.user && !this.userId) {
+        this.userId = this.user;
+    } else if (this.userId && !this.user) {
+        this.user = this.userId;
+    }
+    if (!this.user && !this.userId) {
+        return next(new Error('ChestXrayDetection requires user or userId.'));
+    }
+    next();
+});
+
 // Compound indexes for high-speed filtered/sorted worklist queries
 ChestXrayDetectionSchema.index({ user: 1, createdAt: -1 });
+ChestXrayDetectionSchema.index({ userId: 1, createdAt: -1 });
 ChestXrayDetectionSchema.index({ user: 1, 'mlDetection.prediction': 1 });
 ChestXrayDetectionSchema.index({ user: 1, 'comparison.agreementStatus': 1 });
 

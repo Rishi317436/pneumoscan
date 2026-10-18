@@ -31,12 +31,16 @@ exports.postUpload = async (req, res) => {
             ipAddress: req.ip
         });
 
-        let pythonPath = process.env.PYTHON_PATH || 'python';
+        let pythonPath = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'python' : 'python3');
         let detectScript = path.join(__dirname, '..', '..', 'dip_engine', 'detect_pneumonia.py');
         if (!fs.existsSync(detectScript)) {
             detectScript = path.join(__dirname, '..', 'dip_engine', 'detect_pneumonia.py');
         }
+        if (!fs.existsSync(detectScript)) {
+            detectScript = path.join(process.cwd(), 'dip_engine', 'detect_pneumonia.py');
+        }
         let imgPath = path.resolve(req.file.path);
+        let scriptCwd = path.dirname(detectScript);
 
         if (pythonPath.includes('wsl')) {
             let cleanScript = detectScript.replace(/\\/g, '/');
@@ -59,7 +63,16 @@ exports.postUpload = async (req, res) => {
         const cmd = `${pythonPath} "${detectScript}" "${imgPath}"`;
         console.log(`Executing DIP engine: ${cmd}`);
 
-        exec(cmd, { maxBuffer: 50 * 1024 * 1024 }, async (error, stdout, stderr) => {
+        const execOptions = {
+            maxBuffer: 50 * 1024 * 1024,
+            cwd: scriptCwd,
+            env: {
+                ...process.env,
+                PYTHONPATH: `${scriptCwd}${path.delimiter}${path.dirname(scriptCwd)}${path.delimiter}${process.env.PYTHONPATH || ''}`
+            }
+        };
+
+        exec(cmd, execOptions, async (error, stdout, stderr) => {
             if (error) {
                 console.error(`Exec Error: ${error.message}`, stderr);
                 scan.status = 'failed';
@@ -89,10 +102,12 @@ exports.postUpload = async (req, res) => {
                     pyResult = JSON.parse(stdout);
                 }
 
+                const webOriginalImage = `/uploads/${req.file.filename}`;
                 const detection = new ChestXrayDetection({
                     user: req.session.user.id,
+                    userId: req.session.user.id,
                     scanId: scan._id,
-                    originalImage: req.file.path.replace(/\\/g, '/'),
+                    originalImage: webOriginalImage,
                     processedImage: pyResult.processedImage ? pyResult.processedImage.replace(/\\/g, '/') : '',
                     gradcamImage: pyResult.gradcamImage ? pyResult.gradcamImage.replace(/\\/g, '/') : '',
                     manualDetection: pyResult.manualDetection,
@@ -157,7 +172,8 @@ exports.getResults = async (req, res) => {
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 12));
         const skip = (page - 1) * limit;
 
-        const filter = req.session.user.role === 'admin' ? {} : { user: req.session.user.id };
+        const userFilter = { $or: [{ user: req.session.user.id }, { userId: req.session.user.id }] };
+        const filter = req.session.user.role === 'admin' ? {} : userFilter;
 
         // Prediction filter
         if (req.query.prediction && ['NORMAL', 'PNEUMONIA'].includes(req.query.prediction.toUpperCase())) {
@@ -184,7 +200,7 @@ exports.getResults = async (req, res) => {
         const [total, detections] = await Promise.all([
             ChestXrayDetection.countDocuments(filter),
             ChestXrayDetection.find(filter)
-                .select('originalImage gradcamImage mlDetection manualDetection comparison clinicalInformation createdAt scanId user')
+                .select('originalImage gradcamImage mlDetection manualDetection comparison clinicalInformation createdAt scanId user userId')
                 .populate('scanId', 'filename imageSize status')
                 .populate('user', 'name email')
                 .sort({ createdAt: -1 })
@@ -211,7 +227,9 @@ exports.getResults = async (req, res) => {
 
 exports.getDetail = async (req, res) => {
     try {
-        const query = req.session.user.role === 'admin' ? { _id: req.params.id } : { _id: req.params.id, user: req.session.user.id };
+        const query = req.session.user.role === 'admin' 
+            ? { _id: req.params.id } 
+            : { _id: req.params.id, $or: [{ user: req.session.user.id }, { userId: req.session.user.id }] };
         const detection = await ChestXrayDetection.findOne(query)
             .populate('scanId')
             .populate('user', 'name email')
@@ -230,7 +248,9 @@ exports.getDetail = async (req, res) => {
 
 exports.deleteScan = async (req, res) => {
     try {
-        const query = req.session.user.role === 'admin' ? { _id: req.params.id } : { _id: req.params.id, user: req.session.user.id };
+        const query = req.session.user.role === 'admin' 
+            ? { _id: req.params.id } 
+            : { _id: req.params.id, $or: [{ user: req.session.user.id }, { userId: req.session.user.id }] };
         const detection = await ChestXrayDetection.findOne(query);
 
         if (!detection) {

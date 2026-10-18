@@ -10,9 +10,10 @@ import numpy as np
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 WORKSPACE_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
 DIP_ENGINE_ROOT = os.path.join(WORKSPACE_ROOT, "dip_engine")
+NESTED_DIP_ENGINE = os.path.join(DIP_ENGINE_ROOT, "dip_engine")
 
-for p in [CURRENT_DIR, WORKSPACE_ROOT, DIP_ENGINE_ROOT]:
-    if os.path.exists(p) and p not in sys.path:
+for p in [NESTED_DIP_ENGINE, DIP_ENGINE_ROOT, WORKSPACE_ROOT, CURRENT_DIR]:
+    if p and os.path.exists(p) and p not in sys.path:
         sys.path.insert(0, p)
 
 import config
@@ -20,13 +21,18 @@ import predict_ml
 import gradcam
 
 # Import the 13-stage DIP pipeline orchestrator
-try:
-    from dip_engine.pipeline import run_dip_analysis_pipeline
-except ImportError:
+run_dip_analysis_pipeline = None
+for import_attempt in [
+    lambda: __import__('dip_engine.pipeline', fromlist=['run_dip_analysis_pipeline']).run_dip_analysis_pipeline,
+    lambda: __import__('pipeline', fromlist=['run_dip_analysis_pipeline']).run_dip_analysis_pipeline,
+    lambda: __import__('dip_engine.dip_engine.pipeline', fromlist=['run_dip_analysis_pipeline']).run_dip_analysis_pipeline,
+]:
     try:
-        from pipeline import run_dip_analysis_pipeline
-    except ImportError:
-        run_dip_analysis_pipeline = None
+        run_dip_analysis_pipeline = import_attempt()
+        if run_dip_analysis_pipeline is not None:
+            break
+    except Exception:
+        continue
 
 import manual_detection
 

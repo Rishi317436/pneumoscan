@@ -6,20 +6,32 @@ import base64
 import cv2
 import numpy as np
 
-# Ensure current dip_engine directory is in sys.path
+# Ensure current dip_engine, nested dip_engine, and workspace root directories are in sys.path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-if CURRENT_DIR not in sys.path:
-    sys.path.insert(0, CURRENT_DIR)
+NESTED_DIR = os.path.join(CURRENT_DIR, "dip_engine")
+WORKSPACE_ROOT = os.path.dirname(CURRENT_DIR)
+
+for p in [CURRENT_DIR, NESTED_DIR, WORKSPACE_ROOT]:
+    if p and os.path.exists(p) and p not in sys.path:
+        sys.path.insert(0, p)
 
 import config
 import predict_ml
 import gradcam
 
-# Import the 13-stage DIP pipeline orchestrator
-try:
-    from dip_engine.pipeline import run_dip_analysis_pipeline
-except ImportError:
-    from pipeline import run_dip_analysis_pipeline
+# Import the 13-stage DIP pipeline orchestrator with comprehensive path fallback
+run_dip_analysis_pipeline = None
+for import_attempt in [
+    lambda: __import__('dip_engine.pipeline', fromlist=['run_dip_analysis_pipeline']).run_dip_analysis_pipeline,
+    lambda: __import__('pipeline', fromlist=['run_dip_analysis_pipeline']).run_dip_analysis_pipeline,
+    lambda: __import__('dip_engine.dip_engine.pipeline', fromlist=['run_dip_analysis_pipeline']).run_dip_analysis_pipeline,
+]:
+    try:
+        run_dip_analysis_pipeline = import_attempt()
+        if run_dip_analysis_pipeline is not None:
+            break
+    except Exception:
+        continue
 
 import manual_detection
 

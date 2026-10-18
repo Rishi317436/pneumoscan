@@ -5,7 +5,7 @@ const ChestXrayScan = require('../models/ChestXrayScan');
 exports.getDashboardStats = async (req, res) => {
     try {
         const userId = req.session.user.role === 'admin' ? null : new mongoose.Types.ObjectId(req.session.user.id);
-        const matchStage = userId ? { user: userId } : {};
+        const matchStage = userId ? { $or: [{ user: userId }, { userId: userId }] } : {};
 
         // Run fast parallel aggregation pipelines
         const [kpiStats, predictionDistribution, agreementDistribution, recentScans, weeklyTrend] = await Promise.all([

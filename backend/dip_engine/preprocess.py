@@ -57,3 +57,10 @@ def preprocess_for_manual(path):
     gray = resize_image(gray)
     gray = reduce_noise(gray)
     return enhance_contrast(gray)
+
+# Bridge export for traditional 13-stage DIP pipeline
+try:
+    from dip_engine.dip_engine.preprocess import run_preprocessing_pipeline
+except Exception:
+    pass
+

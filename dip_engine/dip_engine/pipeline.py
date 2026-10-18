@@ -8,29 +8,81 @@ Multi-Feature Zone Scoring -> Quality Sanity Checks -> Final 3-Tier Rule-Based D
 """
 
 import time
+import os
+import sys
 import cv2
 import numpy as np
 from typing import Dict, Any, Optional
+
+# Ensure current dip_engine/dip_engine, parent dip_engine, and root are in sys.path
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIR = os.path.dirname(CURRENT_DIR)
+WORKSPACE_ROOT = os.path.dirname(PARENT_DIR)
+
+for p in [CURRENT_DIR, PARENT_DIR, WORKSPACE_ROOT]:
+    if p and os.path.exists(p) and p not in sys.path:
+        sys.path.insert(0, p)
+
 import config
 from ml.lung_segmentation import MLLungSegmenter, image_to_base64
 from ml.zone_division import divide_seven_anatomical_regions
 from ml.feature_extraction import extract_seven_region_features
 from ml.pneumonia_detector import PneumoniaDetector
-from dip_engine.preprocess import run_preprocessing_pipeline
-from dip_engine.segmentation import perform_lung_segmentation
-from dip_engine.lung_mask import refine_lung_masks
-from dip_engine.zone_division import divide_six_anatomical_zones
-from dip_engine.feature_extraction import extract_zone_feature_vector
-from dip_engine.histogram_analysis import compute_zone_histogram_moments
-from dip_engine.edge_analysis import analyze_zone_edges
-from dip_engine.texture_analysis import analyze_zone_lbp
-from dip_engine.glcm_analysis import analyze_zone_glcm
-from dip_engine.local_analysis import generate_local_abnormality_map
-from dip_engine.morphology import extract_candidate_abnormal_regions
-from dip_engine.bilateral_analysis import compute_bilateral_asymmetry_suite
-from dip_engine.zone_scoring import score_all_zones
-from dip_engine.final_decision import make_final_decision
-from utils.image_utils import sanitize_for_json
+
+import importlib.util
+
+def _safe_import(module_name, obj_name):
+    # 1. Try loading directly from CURRENT_DIR (sibling file in same directory)
+    sibling_file = os.path.join(CURRENT_DIR, f"{module_name}.py")
+    if os.path.exists(sibling_file):
+        try:
+            spec = importlib.util.spec_from_file_location(f"_nested_stage_{module_name}", sibling_file)
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules[f"_nested_stage_{module_name}"] = mod
+            spec.loader.exec_module(mod)
+            if hasattr(mod, obj_name):
+                return getattr(mod, obj_name)
+        except Exception as e:
+            pass
+
+    # 2. Package import attempts
+    attempts = [
+        f"dip_engine.{module_name}",
+        f"{module_name}",
+        f"dip_engine.dip_engine.{module_name}"
+    ]
+    for mod_path in attempts:
+        try:
+            mod = __import__(mod_path, fromlist=[obj_name])
+            if hasattr(mod, obj_name):
+                return getattr(mod, obj_name)
+        except Exception:
+            continue
+    raise ImportError(f"Cannot import {obj_name} from {module_name}")
+
+run_preprocessing_pipeline = _safe_import("preprocess", "run_preprocessing_pipeline")
+perform_lung_segmentation = _safe_import("segmentation", "perform_lung_segmentation")
+refine_lung_masks = _safe_import("lung_mask", "refine_lung_masks")
+divide_six_anatomical_zones = _safe_import("zone_division", "divide_six_anatomical_zones")
+extract_zone_feature_vector = _safe_import("feature_extraction", "extract_zone_feature_vector")
+compute_zone_histogram_moments = _safe_import("histogram_analysis", "compute_zone_histogram_moments")
+analyze_zone_edges = _safe_import("edge_analysis", "analyze_zone_edges")
+analyze_zone_lbp = _safe_import("texture_analysis", "analyze_zone_lbp")
+analyze_zone_glcm = _safe_import("glcm_analysis", "analyze_zone_glcm")
+generate_local_abnormality_map = _safe_import("local_analysis", "generate_local_abnormality_map")
+extract_candidate_abnormal_regions = _safe_import("morphology", "extract_candidate_abnormal_regions")
+compute_bilateral_asymmetry_suite = _safe_import("bilateral_analysis", "compute_bilateral_asymmetry_suite")
+score_all_zones = _safe_import("zone_scoring", "score_all_zones")
+make_final_decision = _safe_import("final_decision", "make_final_decision")
+
+try:
+    from utils.image_utils import sanitize_for_json
+except ImportError:
+    try:
+        from dip_engine.utils.image_utils import sanitize_for_json
+    except ImportError:
+        def sanitize_for_json(obj):
+            return obj
 
 # Global singleton ML models (cached in RAM for instant inference)
 _LUNG_SEGMENTER: Optional[MLLungSegmenter] = None
