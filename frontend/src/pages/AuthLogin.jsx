@@ -163,11 +163,6 @@ const AuthLogin = () => {
           </form>
         </div>
       </div>
-
-      {/* Footer copyright */}
-      <footer className="pneumo-auth-footer">
-        &copy; {new Date().getFullYear()} PNEUMOSCAN &bull; LIGHTSABER GLASS PACS CAD &bull; RESEARCH & CLINICAL SUPPORT
-      </footer>
     </div>
   );
 };
