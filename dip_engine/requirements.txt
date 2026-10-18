@@ -8,3 +8,4 @@ scikit-image
 matplotlib
 seaborn
 scipy
+torch
