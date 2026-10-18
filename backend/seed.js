@@ -2,8 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pneumonia_detection_db';
-
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/pneumonia_detection_db';
 async function seed() {
   try {
     await mongoose.connect(MONGO_URI);
