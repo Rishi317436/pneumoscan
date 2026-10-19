@@ -118,7 +118,7 @@ const UploadScan = () => {
         const scanId = res.data.scanId;
 
         let elapsedSeconds = 0;
-        const maxWaitSeconds = 90;
+        const maxWaitSeconds = 180;
 
         pollIntervalRef.current = setInterval(async () => {
           elapsedSeconds += 2;

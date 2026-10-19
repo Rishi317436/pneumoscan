@@ -6,10 +6,10 @@ import config
 import preprocess
 import predict_ml
 
-def generate_litert_saliency(interpreter, img_batch, patch_size=28, stride=14):
+def generate_litert_saliency(interpreter, img_batch, patch_size=48, stride=32):
     """
     Computes an Occlusion Sensitivity Saliency Heatmap directly from the model
-    using LiteRT (< 35 MB RAM). Captures the exact neural activations identifying pneumonia.
+    using LiteRT (< 35 MB RAM). Captures the exact neural activations identifying pneumonia in ~11s.
     """
     inp_idx = interpreter.get_input_details()[0]['index']
     out_idx = interpreter.get_output_details()[0]['index']
@@ -33,6 +33,9 @@ def generate_litert_saliency(interpreter, img_batch, patch_size=28, stride=14):
 
     if np.max(saliency) > 0:
         saliency /= np.max(saliency)
+        saliency = cv2.GaussianBlur(saliency, (15, 15), 0)
+        if np.max(saliency) > 0:
+            saliency /= np.max(saliency)
     return saliency
 
 def generate_gradcam_tf(model, img_array, layer_name=None):
