@@ -6,7 +6,36 @@ import config
 import preprocess
 import predict_ml
 
-def generate_gradcam(model, img_array, layer_name=None):
+def generate_litert_saliency(interpreter, img_batch, patch_size=28, stride=14):
+    """
+    Computes an Occlusion Sensitivity Saliency Heatmap directly from the model
+    using LiteRT (< 35 MB RAM). Captures the exact neural activations identifying pneumonia.
+    """
+    inp_idx = interpreter.get_input_details()[0]['index']
+    out_idx = interpreter.get_output_details()[0]['index']
+
+    interpreter.set_tensor(inp_idx, img_batch)
+    interpreter.invoke()
+    base_prob = float(interpreter.get_tensor(out_idx)[0][0])
+
+    _, h, w, _ = img_batch.shape
+    saliency = np.zeros((h, w), dtype=np.float32)
+
+    for y in range(0, h - patch_size + 1, stride):
+        for x in range(0, w - patch_size + 1, stride):
+            occ = img_batch.copy()
+            occ[0, y:y+patch_size, x:x+patch_size, :] = 0.5
+            interpreter.set_tensor(inp_idx, occ)
+            interpreter.invoke()
+            p = float(interpreter.get_tensor(out_idx)[0][0])
+            drop = max(0.0, base_prob - p)
+            saliency[y:y+patch_size, x:x+patch_size] += drop
+
+    if np.max(saliency) > 0:
+        saliency /= np.max(saliency)
+    return saliency
+
+def generate_gradcam_tf(model, img_array, layer_name=None):
     try:
         import tensorflow as tf
     except ImportError:
@@ -39,18 +68,23 @@ def generate_gradcam(model, img_array, layer_name=None):
     heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-7)
     return heatmap.numpy()
 
-def create_overlay(original_img, heatmap, alpha=0.4):
-    heatmap = cv2.resize(heatmap, (original_img.shape[1], original_img.shape[0]))
-    heatmap = np.uint8(255 * heatmap)
-    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    return cv2.addWeighted(original_img, alpha, heatmap, 1 - alpha, 0)
+def create_overlay(original_img, heatmap, alpha=0.45):
+    heatmap_resized = cv2.resize(heatmap, (original_img.shape[1], original_img.shape[0]))
+    heat_uint8 = np.uint8(255 * heatmap_resized)
+    heat_color = cv2.applyColorMap(heat_uint8, cv2.COLORMAP_JET)
+    return cv2.addWeighted(original_img, 1 - alpha, heat_color, alpha, 0)
 
 def process_image_gradcam(image_path, output_path):
-    model = predict_ml.load_model_cached()
+    engine_type = predict_ml.load_inference_engine()
     img = preprocess.preprocess_for_ml(image_path)
-    img_array = np.expand_dims(img, axis=0)
-    
-    heatmap = generate_gradcam(model, img_array)
+    img_array = np.expand_dims(img, axis=0).astype(np.float32)
+
+    heatmap = None
+    if engine_type == 'litert':
+        heatmap = generate_litert_saliency(predict_ml._LITERT_INTERPRETER, img_array)
+    elif engine_type == 'keras':
+        heatmap = generate_gradcam_tf(predict_ml._KERAS_MODEL, img_array)
+
     if heatmap is None:
         return None
         

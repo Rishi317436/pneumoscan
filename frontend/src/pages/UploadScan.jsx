@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scanAPI } from '../services/api';
 
@@ -8,6 +8,7 @@ const UploadScan = () => {
   const [fileSizeMB, setFileSizeMB] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [processingStage, setProcessingStage] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   
   const [clinicalData, setClinicalData] = useState({
@@ -20,7 +21,16 @@ const UploadScan = () => {
   });
 
   const fileInputRef = useRef(null);
+  const pollIntervalRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleFile = (file) => {
     if (file && file.type.startsWith('image/')) {
@@ -81,6 +91,7 @@ const UploadScan = () => {
 
     setErrorMsg('');
     setIsUploading(true);
+    setProcessingStage('Securely uploading scan to MongoDB Atlas...');
 
     try {
       const formData = new FormData();
@@ -93,16 +104,65 @@ const UploadScan = () => {
       formData.append('otherInfo', clinicalData.otherInfo);
 
       const res = await scanAPI.uploadScan(formData);
+
+      // Fast synchronous fallback
       if (res.data.success && res.data.detectionId) {
+        setIsUploading(false);
         navigate(`/scan/detail/${res.data.detectionId}`);
-      } else {
-        setErrorMsg(res.data.message || 'Processing failed.');
+        return;
       }
+
+      // Asynchronous non-blocking flow (HTTP 202 Accepted)
+      if (res.data.success && res.data.scanId) {
+        setProcessingStage('Analyzing with DenseNet-121 ML & 13-Stage DIP Engine...');
+        const scanId = res.data.scanId;
+
+        let elapsedSeconds = 0;
+        const maxWaitSeconds = 90;
+
+        pollIntervalRef.current = setInterval(async () => {
+          elapsedSeconds += 2;
+
+          if (elapsedSeconds >= 6) {
+            setProcessingStage(`Segmenting thoracic lung fields & computing Grad-CAM (${elapsedSeconds}s)...`);
+          }
+
+          try {
+            const statusRes = await scanAPI.getScanStatus(scanId);
+            if (statusRes.data.success && statusRes.data.status === 'processed') {
+              clearInterval(pollIntervalRef.current);
+              setProcessingStage('Analysis complete! Redirecting...');
+              const targetId = statusRes.data.detection?._id || statusRes.data.scanId;
+              setIsUploading(false);
+              navigate(`/scan/detail/${targetId}`);
+            } else if (statusRes.data.status === 'failed') {
+              clearInterval(pollIntervalRef.current);
+              setIsUploading(false);
+              setProcessingStage('');
+              setErrorMsg(statusRes.data.message || 'Diagnostic analysis could not be completed.');
+            }
+          } catch (pollErr) {
+            console.warn('[Status Poll Error]', pollErr);
+          }
+
+          if (elapsedSeconds >= maxWaitSeconds) {
+            clearInterval(pollIntervalRef.current);
+            setIsUploading(false);
+            setProcessingStage('');
+            setErrorMsg('Analysis is taking longer than expected. Please check Previous Scans history.');
+          }
+        }, 2000);
+        return;
+      }
+
+      setIsUploading(false);
+      setProcessingStage('');
+      setErrorMsg(res.data.message || 'Processing failed.');
     } catch (err) {
       console.error('Upload error:', err);
-      setErrorMsg(err.response?.data?.message || 'Error occurred while processing chest X-ray.');
-    } finally {
       setIsUploading(false);
+      setProcessingStage('');
+      setErrorMsg(err.response?.data?.message || 'Error occurred while processing chest X-ray.');
     }
   };
 
@@ -332,7 +392,7 @@ const UploadScan = () => {
                   {isUploading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2"></span>
-                      <span>Running Multi-Method Analysis...</span>
+                      <span>{processingStage || 'Running Multi-Method Analysis...'}</span>
                     </>
                   ) : (
                     <>

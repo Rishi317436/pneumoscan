@@ -110,6 +110,7 @@ app.use('/api/report', require('./routes/reportRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/comparison', require('./routes/comparisonRoutes'));
+app.use('/api/images', require('./routes/imageRoutes'));
 
 // Root health check
 app.get('/api/health', (req, res) => {

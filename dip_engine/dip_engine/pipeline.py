@@ -24,10 +24,9 @@ for p in [CURRENT_DIR, PARENT_DIR, WORKSPACE_ROOT]:
         sys.path.insert(0, p)
 
 import config
-from ml.lung_segmentation import MLLungSegmenter, image_to_base64
+from utils.image_utils import image_to_base64
 from ml.zone_division import divide_seven_anatomical_regions
 from ml.feature_extraction import extract_seven_region_features
-from ml.pneumonia_detector import PneumoniaDetector
 
 import importlib.util
 
@@ -83,30 +82,6 @@ except ImportError:
     except ImportError:
         def sanitize_for_json(obj):
             return obj
-
-# Global singleton ML models (cached in RAM for instant inference)
-_LUNG_SEGMENTER: Optional[MLLungSegmenter] = None
-_PNEUMONIA_DETECTOR: Optional[PneumoniaDetector] = None
-
-def get_ml_segmenter() -> MLLungSegmenter:
-    global _LUNG_SEGMENTER
-    if _LUNG_SEGMENTER is None:
-        try:
-            _LUNG_SEGMENTER = MLLungSegmenter()
-        except Exception as e:
-            print(f"[!] Warning initializing MLLungSegmenter: {e}")
-            _LUNG_SEGMENTER = None
-    return _LUNG_SEGMENTER
-
-def get_pneumonia_detector() -> PneumoniaDetector:
-    global _PNEUMONIA_DETECTOR
-    if _PNEUMONIA_DETECTOR is None:
-        try:
-            _PNEUMONIA_DETECTOR = PneumoniaDetector()
-        except Exception as e:
-            print(f"[!] Warning initializing PneumoniaDetector: {e}")
-            _PNEUMONIA_DETECTOR = None
-    return _PNEUMONIA_DETECTOR
 
 
 

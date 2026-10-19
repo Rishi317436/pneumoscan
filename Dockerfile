@@ -11,10 +11,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 1. Install CPU-only PyTorch and Python ML dependencies
+# 1. Install lightweight Python ML & DIP dependencies (LiteRT + OpenCV)
 COPY dip_engine/requirements.txt ./dip_engine/
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r dip_engine/requirements.txt
+RUN pip install --no-cache-dir -r dip_engine/requirements.txt
 
 # 2. Install backend Node.js dependencies
 COPY backend/package*.json ./backend/

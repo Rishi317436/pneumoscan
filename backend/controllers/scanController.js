@@ -5,42 +5,37 @@ const Report = require('../models/Report');
 const Notification = require('../models/Notification');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { exec } = require('child_process');
+const { uploadBufferToGridFS, deleteGridFSFile } = require('../config/gridfs');
 
-exports.postUpload = async (req, res) => {
+// Helper to find Python detect script path
+function resolveDetectScript() {
+    const candidates = [
+        path.join(__dirname, '..', '..', 'dip_engine', 'detect_pneumonia.py'),
+        path.join(__dirname, '..', 'dip_engine', 'detect_pneumonia.py'),
+        path.join(process.cwd(), 'dip_engine', 'detect_pneumonia.py'),
+        path.join(process.cwd(), 'backend', 'dip_engine', 'detect_pneumonia.py')
+    ];
+    for (const p of candidates) {
+        if (fs.existsSync(p)) return p;
+    }
+    return candidates[0];
+}
+
+// Background worker for non-blocking ML and DIP analysis
+async function processScanInBackground(scan, fileBuffer, userId, bodyData, originalFilename, gridfsFileId) {
+    const tempFileName = `xray_${Date.now()}_${path.basename(originalFilename).replace(/[^a-zA-Z0-9._-]/g, '')}`;
+    const tempFilePath = path.join(os.tmpdir(), tempFileName);
+
     try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'Please select a chest X-ray image to upload.' });
-        }
-
-        const scan = new ChestXrayScan({
-            userId: req.session.user.id,
-            imagePath: req.file.path,
-            imageFormat: req.file.mimetype,
-            imageSize: req.file.size,
-            filename: req.file.filename,
-            description: req.body.description || 'Uploaded for pneumonia detection',
-            status: 'processing'
-        });
-        await scan.save();
-
-        await ActivityLog.create({
-            userId: req.session.user.id,
-            action: 'Chest X-Ray Upload',
-            details: `Uploaded radiograph: ${req.file.filename} (${(req.file.size / (1024 * 1024)).toFixed(2)} MB)`,
-            ipAddress: req.ip
-        });
+        // 1. Write buffer to temporary file for Python processing
+        fs.writeFileSync(tempFilePath, fileBuffer);
 
         let pythonPath = process.env.PYTHON_PATH || (process.platform === 'win32' ? 'python' : 'python3');
-        let detectScript = path.join(__dirname, '..', '..', 'dip_engine', 'detect_pneumonia.py');
-        if (!fs.existsSync(detectScript)) {
-            detectScript = path.join(__dirname, '..', 'dip_engine', 'detect_pneumonia.py');
-        }
-        if (!fs.existsSync(detectScript)) {
-            detectScript = path.join(process.cwd(), 'dip_engine', 'detect_pneumonia.py');
-        }
-        let imgPath = path.resolve(req.file.path);
+        let detectScript = resolveDetectScript();
         let scriptCwd = path.dirname(detectScript);
+        let imgPath = path.resolve(tempFilePath);
 
         if (pythonPath.includes('wsl')) {
             let cleanScript = detectScript.replace(/\\/g, '/');
@@ -61,27 +56,32 @@ exports.postUpload = async (req, res) => {
         }
 
         const cmd = `${pythonPath} "${detectScript}" "${imgPath}"`;
-        console.log(`Executing DIP engine: ${cmd}`);
+        console.log(`[Worker] Executing DIP engine: ${cmd}`);
 
         const execOptions = {
             maxBuffer: 50 * 1024 * 1024,
             cwd: scriptCwd,
             env: {
                 ...process.env,
+                TF_ENABLE_ONEDNN_OPTS: '0',
+                TF_CPP_MIN_LOG_LEVEL: '3',
+                OMP_NUM_THREADS: '1',
+                TF_NUM_INTRAOP_THREADS: '1',
+                TF_NUM_INTEROP_THREADS: '1',
+                MALLOC_TRIM_THRESHOLD_: '65536',
                 PYTHONPATH: `${scriptCwd}${path.delimiter}${path.dirname(scriptCwd)}${path.delimiter}${process.env.PYTHONPATH || ''}`
             }
         };
 
         exec(cmd, execOptions, async (error, stdout, stderr) => {
+            // Clean up temporary image file immediately
+            try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch (e) {}
+
             if (error) {
-                console.error(`Exec Error: ${error.message}`, stderr);
+                console.error(`[Worker] Exec Error: ${error.message}`, stderr);
                 scan.status = 'failed';
                 await scan.save();
-                return res.status(500).json({
-                    success: false,
-                    message: 'Processing failed during DenseNet-121 model execution.',
-                    error: error.message
-                });
+                return;
             }
 
             try {
@@ -102,37 +102,77 @@ exports.postUpload = async (req, res) => {
                     pyResult = JSON.parse(stdout);
                 }
 
-                const webOriginalImage = `/uploads/${req.file.filename}`;
+                // 2. Persist Grad-CAM overlay image to MongoDB GridFS
+                let gradcamUrl = '';
+                if (pyResult.gradcamImage) {
+                    const localGradcamPath = path.resolve(scriptCwd, '..', pyResult.gradcamImage.replace(/^\//, ''));
+                    const altGradcamPath = path.resolve(scriptCwd, pyResult.gradcamImage.replace(/^\//, ''));
+                    const targetGradPath = fs.existsSync(localGradcamPath) ? localGradcamPath : (fs.existsSync(altGradcamPath) ? altGradcamPath : null);
+
+                    if (targetGradPath) {
+                        try {
+                            const gradcamBuffer = fs.readFileSync(targetGradPath);
+                            const gradcamId = await uploadBufferToGridFS(gradcamBuffer, `gradcam_${tempFileName}.png`, 'image/png');
+                            gradcamUrl = `/api/images/${gradcamId}`;
+                            try { fs.unlinkSync(targetGradPath); } catch (e) {}
+                        } catch (e) {
+                            console.warn('[Worker] Could not store Grad-CAM to GridFS:', e.message);
+                            gradcamUrl = pyResult.gradcamImage;
+                        }
+                    } else {
+                        gradcamUrl = pyResult.gradcamImage;
+                    }
+                }
+
+                // 3. Persist Zone Overlay to MongoDB GridFS if present
+                if (pyResult.manualDetection?.zoneOverlayImage) {
+                    const localZonePath = path.resolve(scriptCwd, '..', pyResult.manualDetection.zoneOverlayImage.replace(/^\//, ''));
+                    const altZonePath = path.resolve(scriptCwd, pyResult.manualDetection.zoneOverlayImage.replace(/^\//, ''));
+                    const targetZone = fs.existsSync(localZonePath) ? localZonePath : (fs.existsSync(altZonePath) ? altZonePath : null);
+
+                    if (targetZone) {
+                        try {
+                            const zoneBuf = fs.readFileSync(targetZone);
+                            const zoneId = await uploadBufferToGridFS(zoneBuf, `zone_${tempFileName}.png`, 'image/png');
+                            pyResult.manualDetection.zoneOverlayImage = `/api/images/${zoneId}`;
+                            try { fs.unlinkSync(targetZone); } catch (e) {}
+                        } catch (e) {
+                            console.warn('[Worker] Could not store Zone Overlay to GridFS:', e.message);
+                        }
+                    }
+                }
+
+                const originalImageUrl = `/api/images/${gridfsFileId}`;
+
                 const detection = new ChestXrayDetection({
-                    user: req.session.user.id,
-                    userId: req.session.user.id,
+                    user: userId,
+                    userId: userId,
                     scanId: scan._id,
-                    originalImage: webOriginalImage,
-                    processedImage: pyResult.processedImage ? pyResult.processedImage.replace(/\\/g, '/') : '',
-                    gradcamImage: pyResult.gradcamImage ? pyResult.gradcamImage.replace(/\\/g, '/') : '',
+                    originalImage: originalImageUrl,
+                    processedImage: pyResult.processedImage || '',
+                    gradcamImage: gradcamUrl,
                     manualDetection: pyResult.manualDetection,
                     mlDetection: pyResult.mlDetection,
                     comparison: pyResult.comparison,
                     clinicalInformation: {
-                        symptoms: req.body.symptoms || '',
-                        recentHospitalization: req.body.recentHospitalization === true || req.body.recentHospitalization === 'true' || req.body.recentHospitalization === 'on',
-                        timeSinceAdmission: req.body.timeSinceAdmission || 'N/A',
-                        mechanicalVentilation: req.body.mechanicalVentilation === true || req.body.mechanicalVentilation === 'true' || req.body.mechanicalVentilation === 'on',
-                        aspirationHistory: req.body.aspirationHistory === true || req.body.aspirationHistory === 'true' || req.body.aspirationHistory === 'on',
-                        otherInfo: req.body.otherInfo || ''
+                        symptoms: bodyData.symptoms || '',
+                        recentHospitalization: bodyData.recentHospitalization === true || bodyData.recentHospitalization === 'true' || bodyData.recentHospitalization === 'on',
+                        timeSinceAdmission: bodyData.timeSinceAdmission || 'N/A',
+                        mechanicalVentilation: bodyData.mechanicalVentilation === true || bodyData.mechanicalVentilation === 'true' || bodyData.mechanicalVentilation === 'on',
+                        aspirationHistory: bodyData.aspirationHistory === true || bodyData.aspirationHistory === 'true' || bodyData.aspirationHistory === 'on',
+                        otherInfo: bodyData.otherInfo || ''
                     }
                 });
                 await detection.save();
 
                 const manPred = pyResult.manualDetection?.prediction || 'N/A';
-                const manScore = typeof pyResult.manualDetection?.score === 'number' ? pyResult.manualDetection.score.toFixed(1) + '%' : 'N/A';
                 const mlPred = pyResult.mlDetection?.prediction || 'N/A';
                 const mlConf = typeof pyResult.mlDetection?.confidence === 'number' ? (pyResult.mlDetection.confidence * 100).toFixed(1) + '%' : 'N/A';
                 const agree = pyResult.comparison?.agreementStatus || 'N/A';
 
                 const report = new Report({
                     detectionId: detection._id,
-                    userId: req.session.user.id,
+                    userId: userId,
                     findings: `Deep Learning (DenseNet-121): ${mlPred} (Confidence: ${mlConf}). Traditional DIP Analysis: ${manPred}. Agreement: ${agree}.`,
                     recommendations: 'Results are for computational comparison and research assistance. Consult with a qualified physician or radiologist for clinical diagnosis.'
                 });
@@ -140,28 +180,115 @@ exports.postUpload = async (req, res) => {
 
                 scan.status = 'processed';
                 await scan.save();
-
-                res.status(201).json({
-                    success: true,
-                    message: 'Scan analyzed successfully via multi-method pipeline.',
-                    detectionId: detection._id,
-                    detection,
-                    report
-                });
+                console.log(`[Worker] Scan ${scan._id} processed and saved to MongoDB Atlas cleanly.`);
             } catch (parseError) {
-                console.error(`Parse Error: ${parseError.message}`, stdout);
+                console.error(`[Worker] Parse Error: ${parseError.message}`, stdout);
                 scan.status = 'failed';
                 await scan.save();
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to parse processing results from DIP engine.',
-                    error: parseError.message
-                });
             }
         });
+    } catch (err) {
+        console.error('[Worker] Fatal Error:', err);
+        try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch (e) {}
+        scan.status = 'failed';
+        await scan.save();
+    }
+}
+
+// Rapid Non-Blocking Upload Handler (< 400ms HTTP Response)
+exports.postUpload = async (req, res) => {
+    try {
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ success: false, message: 'Please select a chest X-ray image to upload.' });
+        }
+
+        // 1. Immediately store the original radiograph binary into MongoDB Atlas GridFS
+        const originalName = req.file.originalname || `xray_${Date.now()}.jpeg`;
+        const mimeType = req.file.mimetype || 'image/jpeg';
+        const gridfsId = await uploadBufferToGridFS(req.file.buffer, originalName, mimeType);
+        const imageUrl = `/api/images/${gridfsId}`;
+
+        // 2. Persist the Scan document in MongoDB
+        const scan = new ChestXrayScan({
+            userId: req.session.user.id,
+            user: req.session.user.id,
+            imagePath: imageUrl,
+            imageFormat: mimeType,
+            imageSize: req.file.size,
+            filename: originalName,
+            description: req.body.description || 'Uploaded for pneumonia detection',
+            status: 'processing'
+        });
+        await scan.save();
+
+        await ActivityLog.create({
+            userId: req.session.user.id,
+            action: 'Chest X-Ray Upload',
+            details: `Uploaded radiograph: ${originalName} (${(req.file.size / (1024 * 1024)).toFixed(2)} MB) to Atlas GridFS`,
+            ipAddress: req.ip
+        });
+
+        // 3. Immediately return HTTP 202 Accepted (< 400ms) to eliminate Render 60s gateway timeouts
+        res.status(202).json({
+            success: true,
+            status: 'processing',
+            message: 'Radiograph securely mounted in MongoDB Atlas. Analysis executing in background...',
+            scanId: scan._id,
+            imagePath: imageUrl
+        });
+
+        // 4. Trigger asynchronous background analysis without holding the HTTP connection
+        processScanInBackground(scan, req.file.buffer, req.session.user.id, req.body, originalName, gridfsId);
+
     } catch (error) {
         console.error('postUpload error:', error);
-        res.status(500).json({ success: false, message: 'An error occurred during upload.' });
+        res.status(500).json({ success: false, message: 'An error occurred during upload: ' + error.message });
+    }
+};
+
+// Polling endpoint for real-time analysis status
+exports.getScanStatus = async (req, res) => {
+    try {
+        const scan = await ChestXrayScan.findById(req.params.id).lean();
+        if (!scan) {
+            return res.status(404).json({ success: false, message: 'Study scan record not found.' });
+        }
+
+        if (scan.status === 'processing') {
+            return res.json({
+                success: true,
+                status: 'processing',
+                scanId: scan._id,
+                message: 'Analysis in progress...'
+            });
+        }
+
+        if (scan.status === 'failed') {
+            return res.json({
+                success: false,
+                status: 'failed',
+                scanId: scan._id,
+                message: 'Processing could not be completed on the radiograph.'
+            });
+        }
+
+        // Status is 'processed': fetch detection and report
+        const detection = await ChestXrayDetection.findOne({ scanId: scan._id })
+            .populate('user', 'name email')
+            .lean();
+
+        const report = detection ? await Report.findOne({ detectionId: detection._id }).lean() : null;
+
+        res.json({
+            success: true,
+            status: 'processed',
+            scanId: scan._id,
+            detection,
+            report
+        });
+    } catch (error) {
+        console.error('getScanStatus error:', error);
+        res.status(500).json({ success: false, message: 'Failed to retrieve scan status.' });
     }
 };
 
@@ -257,19 +384,19 @@ exports.deleteScan = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Study not found or unauthorized.' });
         }
 
-        // Clean up files safely
-        if (detection.originalImage) {
-            const fullOrigPath = path.resolve(__dirname, '..', detection.originalImage);
-            if (fs.existsSync(fullOrigPath)) {
-                try { fs.unlinkSync(fullOrigPath); } catch (e) {}
+        // Clean up GridFS files if referenced
+        const extractGridId = (url) => {
+            if (url && url.startsWith('/api/images/')) {
+                return url.replace('/api/images/', '');
             }
-        }
-        if (detection.gradcamImage) {
-            const fullGradPath = path.resolve(__dirname, '..', detection.gradcamImage);
-            if (fs.existsSync(fullGradPath)) {
-                try { fs.unlinkSync(fullGradPath); } catch (e) {}
-            }
-        }
+            return null;
+        };
+
+        const origGridId = extractGridId(detection.originalImage);
+        if (origGridId) await deleteGridFSFile(origGridId);
+
+        const gradGridId = extractGridId(detection.gradcamImage);
+        if (gradGridId) await deleteGridFSFile(gradGridId);
 
         // Cascade delete Scan and Report
         if (detection.scanId) {

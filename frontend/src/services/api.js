@@ -34,6 +34,7 @@ export const scanAPI = {
   uploadScan: (formData) => api.post('/scan/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  getScanStatus: (id) => api.get(`/scan/status/${id}`),
   getResults: () => api.get('/scan/results'),
   getDetail: (id) => api.get(`/scan/detail/${id}`)
 };

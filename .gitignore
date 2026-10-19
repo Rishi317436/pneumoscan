@@ -48,9 +48,14 @@ backend/gradcam/*.png
 backend/gradcam/*.jpg
 dip_engine/results/*.png
 dip_engine/results/*.jpg
+dip_engine/results/*.jpeg
+backend/dip_engine/results/*.png
+backend/dip_engine/results/*.jpg
+backend/dip_engine/results/*.jpeg
 !backend/uploads/.gitkeep
 !backend/gradcam/.gitkeep
 !dip_engine/results/.gitkeep
+!backend/dip_engine/results/.gitkeep
 
 # Large Datasets & Model weights exceeding GitHub 100MB limit
 dataset/

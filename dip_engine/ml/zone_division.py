@@ -17,8 +17,18 @@ Executes:
 
 import cv2
 import numpy as np
-from typing import Dict, Any, List, Optional
-from ml.lung_segmentation import image_to_base64
+import base64
+from typing import Dict, Any, List, Optional, Tuple
+
+def image_to_base64(image_array: np.ndarray, format: str = "png") -> str:
+    """Converts an OpenCV image array (uint8) to a base64 encoded data URI."""
+    if image_array is None or image_array.size == 0:
+        return ""
+    success, encoded_buf = cv2.imencode(f".{format}", image_array)
+    if not success:
+        return ""
+    b64_str = base64.b64encode(encoded_buf).decode("utf-8")
+    return f"data:image/{format};base64,{b64_str}"
 
 ZONE_METADATA = {
     "right_upper": {
