@@ -5,6 +5,7 @@ import AIConfidenceGauge from '../components/workspace/AIConfidenceGauge';
 import DualMethodComparisonCard from '../components/workspace/DualMethodComparisonCard';
 import IntermediateStagesCard from '../components/workspace/IntermediateStagesCard';
 import { useUploadScan } from '../hooks/useScans';
+import { scanAPI } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import RadiologyDashboard from './RadiologyDashboard';
 import WorklistHistory from './WorklistHistory';
@@ -16,11 +17,21 @@ const Workspace = () => {
   const [fileSizeMB, setFileSizeMB] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [activeDetection, setActiveDetection] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const fileInputRef = useRef(null);
+  const pollIntervalRef = useRef(null);
   const { addToast } = useToast();
   const uploadMutation = useUploadScan();
-  const isProcessing = Boolean(uploadMutation.isPending || uploadMutation.isLoading);
+  const isProcessing = Boolean(uploadMutation.isPending || uploadMutation.isLoading || isAnalyzing);
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleFile = (file) => {
     if (file && file.type.startsWith('image/')) {
@@ -53,6 +64,10 @@ const Workspace = () => {
   };
 
   const handleClear = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
+    setIsAnalyzing(false);
     setSelectedFile(null);
     setPreviewUrl('');
     setFileSizeMB('');
@@ -72,14 +87,54 @@ const Workspace = () => {
 
     try {
       const res = await uploadMutation.mutateAsync(formData);
+
+      // Fast synchronous fallback
       if (res.success && res.detection) {
         setActiveDetection(res.detection);
         addToast('Chest X-Ray analysis and 6-zone segmentation complete!', 'success');
-      } else {
-        addToast(res.message || 'Processing failed.', 'error');
+        return;
       }
+
+      // Asynchronous 202 non-blocking flow
+      if (res.success && res.scanId) {
+        setIsAnalyzing(true);
+        addToast('Radiograph stored in MongoDB Atlas. Running Multi-Method Analysis...', 'info');
+
+        let elapsedSeconds = 0;
+        const maxWaitSeconds = 90;
+
+        pollIntervalRef.current = setInterval(async () => {
+          elapsedSeconds += 2;
+
+          try {
+            const statusRes = await scanAPI.getScanStatus(res.scanId);
+            if (statusRes.data.success && statusRes.data.status === 'processed') {
+              clearInterval(pollIntervalRef.current);
+              setIsAnalyzing(false);
+              setActiveDetection(statusRes.data.detection);
+              addToast('Chest X-Ray analysis and 6-zone segmentation complete!', 'success');
+            } else if (statusRes.data.status === 'failed') {
+              clearInterval(pollIntervalRef.current);
+              setIsAnalyzing(false);
+              addToast(statusRes.data.message || 'Processing could not be completed on the radiograph.', 'error');
+            }
+          } catch (pollErr) {
+            console.warn('[Status Poll Error]', pollErr);
+          }
+
+          if (elapsedSeconds >= maxWaitSeconds) {
+            clearInterval(pollIntervalRef.current);
+            setIsAnalyzing(false);
+            addToast('Analysis timed out. Please check Worklist History in a moment.', 'warning');
+          }
+        }, 2000);
+        return;
+      }
+
+      addToast(res.message || 'Processing failed.', 'error');
     } catch (err) {
       console.error('Inference error:', err);
+      setIsAnalyzing(false);
       addToast(err.response?.data?.message || 'Error occurred during Chest X-Ray analysis.', 'error');
     }
   };

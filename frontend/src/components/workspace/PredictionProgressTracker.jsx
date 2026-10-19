@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
 const PredictionProgressTracker = ({ isProcessing }) => {
-  const [secondsRemaining, setSecondsRemaining] = useState(4);
-  const [percent, setPercent] = useState(10);
+  const [secondsRemaining, setSecondsRemaining] = useState(20);
+  const [percent, setPercent] = useState(5);
 
   useEffect(() => {
     if (!isProcessing) {
-      setSecondsRemaining(4);
-      setPercent(10);
+      setSecondsRemaining(20);
+      setPercent(5);
       return;
     }
 
     const startTime = Date.now();
-    const totalDuration = 4200; // 4.2 seconds typical run
+    const totalDuration = 20000; // 20s typical run for full DIP + DenseNet-121 LiteRT
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
