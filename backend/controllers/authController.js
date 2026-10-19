@@ -40,11 +40,29 @@ exports.updateProfile = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Not authenticated' });
         }
 
-        const { name, phone, dob, gender, address, currentPassword, newPassword } = req.body;
+        const { name, email, phone, dob, gender, address, currentPassword, newPassword } = req.body;
         const user = await User.findById(req.session.user.id);
 
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // If email is provided and different from current, validate and ensure uniqueness
+        if (email && typeof email === 'string' && email.trim() !== '') {
+            const normalizedEmail = email.trim().toLowerCase();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(normalizedEmail)) {
+                return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+            }
+
+            if (normalizedEmail !== user.email) {
+                const existingUser = await User.findOne({ email: normalizedEmail, _id: { $ne: user._id } });
+                if (existingUser) {
+                    return res.status(400).json({ success: false, message: 'This email address is already in use by another account.' });
+                }
+                user.email = normalizedEmail;
+                req.session.user.email = normalizedEmail;
+            }
         }
 
         // If changing password, verify current password
@@ -68,13 +86,17 @@ exports.updateProfile = async (req, res) => {
 
         await user.save();
 
-        // Update session user name
+        // Update session user details
         req.session.user.name = user.name;
+        req.session.user.email = user.email;
+        if (user.profilePhoto !== undefined) {
+            req.session.user.profilePhoto = user.profilePhoto;
+        }
 
         await ActivityLog.create({
             userId: user._id,
             action: 'Profile Updated',
-            details: 'Clinician updated profile information',
+            details: `Clinician updated profile information (${user.email})`,
             ipAddress: req.ip
         });
 

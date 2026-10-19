@@ -41,10 +41,10 @@ body {
   color: var(--rad-text-primary);
   font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   min-height: 100vh;
   position: relative;
-  background-color: #111411;
+  background-color: #0b110b;
 }
 
 /* Dedicated GPU-composited background layer: Zero layout thrashing, Butter-smooth 120fps cursor */
@@ -62,9 +62,11 @@ body::before {
   pointer-events: none;
   transform: translate3d(0, 0, 0);
   will-change: transform;
+  opacity: 0.38; /* Sophisticated ambient clinical watermark, eliminates neon glare */
+  filter: contrast(110%) brightness(95%);
 }
 
-/* Dark Theme Background (Original Image Brightness, Zero Dimming Overlays) */
+/* Dark Theme Background (Cinematic Medical Vignette + Deep Watermark) */
 body:not([data-bs-theme="light"]):not(.theme-light)::before,
 [data-bs-theme="dark"] body::before,
 body[data-theme="dark"]::before,
@@ -72,10 +74,12 @@ body.dark::before,
 body.theme-dark::before,
 html[data-bs-theme="dark"] body::before,
 html.theme-dark body::before {
-  background-image: url('/assets/PneumoScan_Dark_Green_Background.png');
+  background-image: 
+    radial-gradient(circle at center, rgba(11, 17, 11, 0.5) 0%, rgba(9, 14, 9, 0.88) 100%),
+    url('/assets/PneumoScan_Dark_Green_Background.png');
 }
 
-/* Light Theme Background (Original Image Brightness, Zero Dimming Overlays) */
+/* Light Theme Background (Subtle Soft Clinical Watermark) */
 [data-bs-theme="light"] body,
 body[data-theme="light"],
 body.light,
@@ -90,31 +94,98 @@ body.light::before,
 body.theme-light::before,
 html[data-bs-theme="light"] body::before,
 html.theme-light body::before {
-  background-image: url('/assets/PneumoScan_Light_Green_Background.png');
+  background-image: 
+    radial-gradient(circle at center, rgba(237, 241, 235, 0.6) 0%, rgba(225, 232, 222, 0.9) 100%),
+    url('/assets/PneumoScan_Light_Green_Background.png');
+  opacity: 0.45;
 }
 
-/* --- Universal Transparent Glassmorphism Cards (Optimized Performance) --- */
+/* --- Universal Transparent Glassmorphism Cards (High Legibility & Premium Finish) --- */
 .rad-card,
 .glass-card,
 .card,
 .pacs-card,
 .modal-content {
-  background: rgba(20, 28, 20, 0.72) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  border: 1px solid rgba(57, 255, 20, 0.35) !important;
-  border-radius: 16px !important;
+  background: rgba(14, 22, 14, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(57, 255, 20, 0.22) !important;
+  border-radius: 18px !important;
   box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 0 rgba(57, 255, 20, 0.12),
-    0 12px 32px rgba(0, 0, 0, 0.40) !important;
-  transition: border-color 0.15s ease;
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(57, 255, 20, 0.08),
+    0 16px 40px rgba(0, 0, 0, 0.55) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .rad-card:hover,
 .glass-card:hover,
 .pacs-card:hover {
-  border-color: rgba(57, 255, 20, 0.55) !important;
+  border-color: rgba(57, 255, 20, 0.42) !important;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 20px 48px rgba(0, 0, 0, 0.65),
+    0 0 20px rgba(57, 255, 20, 0.15) !important;
+}
+
+/* --- Modern Unified Input Groups (Zero Disjointed Borders) --- */
+.modern-input-group {
+  display: flex !important;
+  align-items: center !important;
+  background: rgba(8, 14, 8, 0.75) !important;
+  border: 1px solid rgba(57, 255, 20, 0.28) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  transition: all 0.2s ease !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.modern-input-group:focus-within {
+  border-color: var(--lightsaber-green, #39ff14) !important;
+  box-shadow: 
+    0 0 16px rgba(57, 255, 20, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.modern-input-group .input-group-text {
+  background: transparent !important;
+  border: none !important;
+  color: #8da48a !important;
+  padding: 0.65rem 0.85rem !important;
+  font-size: 0.95rem !important;
+}
+
+.modern-input-group .form-control {
+  background: transparent !important;
+  border: none !important;
+  color: #f3f6f0 !important;
+  padding: 0.65rem 0.85rem 0.65rem 0 !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+}
+
+.modern-input-group .form-control:focus {
+  box-shadow: none !important;
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+[data-bs-theme="light"] .modern-input-group,
+.theme-light .modern-input-group {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(40, 70, 35, 0.25) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-bs-theme="light"] .modern-input-group:focus-within,
+.theme-light .modern-input-group:focus-within {
+  border-color: #239e10 !important;
+  box-shadow: 0 0 12px rgba(35, 158, 16, 0.25) !important;
+}
+
+[data-bs-theme="light"] .modern-input-group .form-control,
+.theme-light .modern-input-group .form-control {
+  color: #1a2618 !important;
 }
 
 /* Light Theme Glassmorphism Cards - True Translucent Glass (Matching Reference HTML) */
@@ -1216,7 +1287,7 @@ select option,
   /* Global Viewport Zero-Blowout Safety */
   html, body, #root {
     max-width: 100vw !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
   }
 
   .rad-header {

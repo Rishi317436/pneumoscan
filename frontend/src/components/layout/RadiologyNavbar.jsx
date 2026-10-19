@@ -163,7 +163,7 @@ const RadiologyNavbar = () => {
               </button>
 
               {/* Clinician Pill (Hidden on narrowest mobile, visible >= sm) */}
-              <div className="d-none d-sm-inline-flex align-items-center gap-2 px-2.5 py-1 rounded-pill glass-card" style={{ border: '1px solid var(--rad-border)' }}>
+              <div className="d-none d-sm-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill glass-card" style={{ border: '1px solid rgba(57, 255, 20, 0.35)' }}>
                 {user.profilePhoto ? (
                   <img
                     src={user.profilePhoto}
@@ -174,8 +174,8 @@ const RadiologyNavbar = () => {
                 ) : (
                   <span className="pulse-dot" style={{ backgroundColor: 'var(--rad-cyan, #39ff14)' }}></span>
                 )}
-                <span className="fw-bold text-white small text-truncate" style={{ maxWidth: '100px' }}>{user.name}</span>
-                <span className="badge extra-small text-uppercase d-none d-md-inline" style={{ background: 'rgba(57, 255, 20, 0.15)', color: 'var(--rad-cyan, #39ff14)' }}>
+                <span className="fw-bold text-white small text-truncate" style={{ maxWidth: '170px' }}>{user.name}</span>
+                <span className="badge extra-small text-uppercase d-none d-md-inline" style={{ background: 'rgba(57, 255, 20, 0.18)', color: 'var(--rad-cyan, #39ff14)' }}>
                   {user.role}
                 </span>
               </div>
