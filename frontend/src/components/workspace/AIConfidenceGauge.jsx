@@ -17,15 +17,15 @@ const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
       </div>
 
       {/* Main Classification & Confidence Score */}
-      <div className="d-flex align-items-center justify-content-between my-3">
+      <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between my-3 gap-2">
         <div>
           {isPneumonia ? (
-            <span className="badge rad-badge-pneumonia fs-5 px-3 py-2">
-              <i className="fas fa-virus me-2"></i> PNEUMONIA DETECTED
+            <span className="badge rad-badge-pneumonia fs-6 px-3 py-2 text-wrap text-start lh-base">
+              <i className="fas fa-exclamation-triangle me-2"></i> Pneumonia Suspected — Further Clinical Evaluation Required
             </span>
           ) : (
-            <span className="badge rad-badge-normal fs-5 px-3 py-2">
-              <i className="fas fa-shield-alt me-2"></i> NORMAL / CLEAR
+            <span className="badge rad-badge-normal fs-6 px-3 py-2">
+              <i className="fas fa-shield-alt me-2"></i> Normal
             </span>
           )}
         </div>
@@ -63,13 +63,13 @@ const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
           <div className="col-4">
             <small className="text-muted extra-small d-block">Manual DIP</small>
             <strong className={`small ${manualDetection?.prediction === 'PNEUMONIA' ? 'text-danger' : 'text-success'}`}>
-              {manualDetection?.prediction || 'N/A'}
+              {manualDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (manualDetection?.prediction === 'NORMAL' ? 'Normal' : manualDetection?.prediction || 'N/A')}
             </strong>
           </div>
           <div className="col-4 border-start border-end border-secondary border-opacity-25">
             <small className="text-muted extra-small d-block">Deep Learning</small>
             <strong className={`small ${mlDetection?.prediction === 'PNEUMONIA' ? 'text-danger' : 'text-success'}`}>
-              {mlDetection?.prediction || 'N/A'}
+              {mlDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (mlDetection?.prediction === 'NORMAL' ? 'Normal' : mlDetection?.prediction || 'N/A')}
             </strong>
           </div>
           <div className="col-4">

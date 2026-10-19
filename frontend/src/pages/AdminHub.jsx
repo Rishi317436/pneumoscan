@@ -697,7 +697,7 @@ const AdminHub = () => {
                             <td className="text-white font-monospace">{s.filename}</td>
                             <td>
                               <span className={`badge ${s.detection?.mlDetection?.prediction === 'PNEUMONIA' ? 'bg-danger' : 'bg-success'}`}>
-                                {s.detection?.mlDetection?.prediction || 'PENDING'}
+                                {s.detection?.mlDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (s.detection?.mlDetection?.prediction === 'NORMAL' ? 'Normal' : s.detection?.mlDetection?.prediction || 'PENDING')}
                               </span>
                             </td>
                             <td className="text-info font-monospace">
@@ -757,7 +757,7 @@ const AdminHub = () => {
             <div className="col-md-3">
               <select value={scanPredFilter} onChange={e => setScanPredFilter(e.target.value)} className="form-select form-select-sm">
                 <option value="">All Diagnostic Calls</option>
-                <option value="PNEUMONIA">Pneumonia Only</option>
+                <option value="PNEUMONIA">Pneumonia Suspected Only</option>
                 <option value="NORMAL">Normal Only</option>
               </select>
             </div>
@@ -798,14 +798,14 @@ const AdminHub = () => {
                     <td className="text-secondary small">{s.userId?.name || 'Unknown'}</td>
                     <td>
                       <span className={`badge ${s.detection?.mlDetection?.prediction === 'PNEUMONIA' ? 'bg-danger' : 'bg-success'}`}>
-                        {s.detection?.mlDetection?.prediction || 'PENDING'}
+                        {s.detection?.mlDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (s.detection?.mlDetection?.prediction === 'NORMAL' ? 'Normal' : s.detection?.mlDetection?.prediction || 'PENDING')}
                       </span>
                     </td>
                     <td className="font-monospace text-info small">
                       {s.detection?.mlDetection?.confidence ? `${(s.detection.mlDetection.confidence * 100).toFixed(1)}%` : '-'}
                     </td>
                     <td className="text-secondary extra-small">
-                      {s.detection?.manualDetection?.prediction || 'N/A'}
+                      {s.detection?.manualDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (s.detection?.manualDetection?.prediction === 'NORMAL' ? 'Normal' : s.detection?.manualDetection?.prediction || 'N/A')}
                     </td>
                     <td>
                       <span className={`badge ${s.status === 'processed' ? 'bg-success-subtle text-success' : s.status === 'failed' ? 'bg-danger text-white' : 'bg-warning text-dark'}`}>

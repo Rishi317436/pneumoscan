@@ -45,16 +45,16 @@ const RadiologyDashboard = () => {
       </div>
 
       {isLoading ? (
-        <div className="row g-4 mb-4">
-          <div className="col-md-3"><SkeletonCard height="60px" /></div>
-          <div className="col-md-3"><SkeletonCard height="60px" /></div>
-          <div className="col-md-3"><SkeletonCard height="60px" /></div>
-          <div className="col-md-3"><SkeletonCard height="60px" /></div>
+        <div className="row g-2 g-md-4 mb-4">
+          <div className="col-6 col-md-3"><SkeletonCard height="60px" /></div>
+          <div className="col-6 col-md-3"><SkeletonCard height="60px" /></div>
+          <div className="col-6 col-md-3"><SkeletonCard height="60px" /></div>
+          <div className="col-6 col-md-3"><SkeletonCard height="60px" /></div>
         </div>
       ) : (
         /* Top 4 KPI Tiles */
-        <div className="row g-3 mb-4">
-          <div className="col-md-3">
+        <div className="row g-2 g-md-3 mb-4">
+          <div className="col-6 col-md-3">
             <MetricCard
               title="Total Chest X-Rays"
               value={summary.totalScans}
@@ -64,17 +64,17 @@ const RadiologyDashboard = () => {
               glow
             />
           </div>
-          <div className="col-md-3">
+          <div className="col-6 col-md-3">
             <MetricCard
               title="Positivity Rate"
               value={`${summary.positivityRate}%`}
-              subtitle={`${summary.pneumoniaCount} Pneumonia Positive`}
+              subtitle={`${summary.pneumoniaCount} Pneumonia Suspected`}
               icon="fa-virus"
               color={summary.positivityRate > 50 ? 'rose' : 'emerald'}
               glow={summary.positivityRate > 50}
             />
           </div>
-          <div className="col-md-3">
+          <div className="col-6 col-md-3">
             <MetricCard
               title="Model Confidence"
               value={`${summary.avgConfidence}%`}
@@ -83,7 +83,7 @@ const RadiologyDashboard = () => {
               color="cyan"
             />
           </div>
-          <div className="col-md-3">
+          <div className="col-6 col-md-3">
             <MetricCard
               title="Dual Concordance"
               value={`${summary.concordanceRate}%`}
@@ -169,14 +169,14 @@ const RadiologyDashboard = () => {
                             </td>
                             <td>
                               {manualPred === 'PNEUMONIA' ? (
-                                <span className="badge rad-badge-pneumonia">Pneumonia</span>
+                                <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Suspected — Further Clinical Evaluation Required</span>
                               ) : (
                                 <span className="badge rad-badge-normal">Normal</span>
                               )}
                             </td>
                             <td>
                               {mlPred === 'PNEUMONIA' ? (
-                                <span className="badge rad-badge-pneumonia">Pneumonia</span>
+                                <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Suspected — Further Clinical Evaluation Required</span>
                               ) : (
                                 <span className="badge rad-badge-normal">Normal</span>
                               )}

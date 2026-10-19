@@ -58,13 +58,15 @@ const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison }) 
             </div>
 
             {/* Classification & Confidence Score */}
-            <div className="d-flex align-items-center justify-content-between my-2 p-2.5 rounded bg-surface">
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 my-2 p-2.5 rounded bg-surface">
               <div>
                 <small className="text-muted extra-small d-block text-uppercase fw-bold">Prediction</small>
                 {manual.prediction === 'PNEUMONIA' ? (
-                  <span className="badge rad-badge-pneumonia fs-6 px-2.5 py-1">PNEUMONIA</span>
+                  <span className="badge rad-badge-pneumonia fs-6 px-2.5 py-1 text-wrap text-start">
+                    Pneumonia Suspected — Further Clinical Evaluation Required
+                  </span>
                 ) : (
-                  <span className="badge rad-badge-normal fs-6 px-2.5 py-1">NORMAL</span>
+                  <span className="badge rad-badge-normal fs-6 px-2.5 py-1">Normal</span>
                 )}
               </div>
               <div className="text-end">
@@ -111,13 +113,15 @@ const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison }) 
             </div>
 
             {/* Classification & Confidence Score */}
-            <div className="d-flex align-items-center justify-content-between my-2 p-2.5 rounded bg-surface">
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 my-2 p-2.5 rounded bg-surface">
               <div>
                 <small className="text-muted extra-small d-block text-uppercase fw-bold">Prediction</small>
                 {ml.prediction === 'PNEUMONIA' ? (
-                  <span className="badge rad-badge-pneumonia fs-6 px-2.5 py-1">PNEUMONIA</span>
+                  <span className="badge rad-badge-pneumonia fs-6 px-2.5 py-1 text-wrap text-start">
+                    Pneumonia Suspected — Further Clinical Evaluation Required
+                  </span>
                 ) : (
-                  <span className="badge rad-badge-normal fs-6 px-2.5 py-1">NORMAL</span>
+                  <span className="badge rad-badge-normal fs-6 px-2.5 py-1">Normal</span>
                 )}
               </div>
               <div className="text-end">

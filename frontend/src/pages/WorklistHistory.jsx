@@ -78,8 +78,8 @@ const WorklistHistory = () => {
               className="form-select form-select-sm"
             >
               <option value="">All Diagnostic Calls</option>
-              <option value="PNEUMONIA">Pneumonia Positive</option>
-              <option value="NORMAL">Normal / Clear</option>
+              <option value="PNEUMONIA">Pneumonia Suspected</option>
+              <option value="NORMAL">Normal</option>
             </select>
           </div>
 
@@ -157,16 +157,16 @@ const WorklistHistory = () => {
                         </td>
                         <td>
                           {manualPred === 'PNEUMONIA' ? (
-                            <span className="badge rad-badge-pneumonia">PNEUMONIA</span>
+                            <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Suspected — Further Clinical Evaluation Required</span>
                           ) : (
-                            <span className="badge rad-badge-normal">NORMAL</span>
+                            <span className="badge rad-badge-normal">Normal</span>
                           )}
                         </td>
                         <td>
                           {mlPred === 'PNEUMONIA' ? (
-                            <span className="badge rad-badge-pneumonia">PNEUMONIA</span>
+                            <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Suspected — Further Clinical Evaluation Required</span>
                           ) : (
-                            <span className="badge rad-badge-normal">NORMAL</span>
+                            <span className="badge rad-badge-normal">Normal</span>
                           )}
                         </td>
                         <td className="font-monospace text-cyan fw-bold" style={{ color: 'var(--rad-cyan)' }}>

@@ -1211,59 +1211,167 @@ select option,
   border-color: rgba(35, 158, 16, 0.5) !important;
 }
 
-/* Mobile Phone Responsive Tweaks (< 768px) */
+/* Mobile Phone Responsive Tweaks (< 768px and < 480px) */
 @media (max-width: 768px) {
+  /* Global Viewport Zero-Blowout Safety */
+  html, body, #root {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   .rad-header {
-    min-height: 64px !important;
+    min-height: 60px !important;
     padding: 0.5rem 0.75rem !important;
   }
 
   .rad-mobile-drawer {
-    top: 64px !important;
-    max-height: calc(100vh - 64px) !important;
+    top: 60px !important;
+    max-height: calc(100vh - 60px) !important;
     padding: 1rem !important;
   }
 
   .rad-logo-icon {
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 1.05rem !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1rem !important;
   }
 
   .rad-brand-logo {
-    font-size: 1.15rem !important;
+    font-size: 1.1rem !important;
     gap: 8px !important;
   }
 
   /* Compact Holographic Dropzone for Mobile */
   .holo-scanner-dropzone {
-    padding: 2.25rem 1rem !important;
+    padding: 2rem 1rem !important;
   }
 
   .scanner-aperture-ring {
-    width: 64px !important;
-    height: 64px !important;
+    width: 58px !important;
+    height: 58px !important;
   }
 
   .scanner-aperture-ring i {
-    font-size: 1.5rem !important;
+    font-size: 1.35rem !important;
   }
 
   /* PACS Viewer Touch and Canvas Dimensions */
   .pacs-viewer-container {
-    min-height: 300px !important;
+    min-height: 260px !important;
   }
 
   .pacs-image-layer {
-    max-height: 360px !important;
+    max-height: 320px !important;
     width: 100% !important;
     object-fit: contain !important;
   }
 
   /* Toolbar wrapping and touch comfort */
+  .rad-card-header {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+
   .rad-card-header .glass-btn {
-    padding: 6px 10px !important;
-    font-size: 0.8rem !important;
+    padding: 6px 9px !important;
+    font-size: 0.78rem !important;
+    touch-action: manipulation !important;
+  }
+
+  /* HUD Telemetry Scaling */
+  .pacs-viewer-container .badge {
+    font-size: 0.65rem !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Full responsive tables with smooth momentum touch scrolling */
+  .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+  }
+
+  .table-responsive > .table {
+    min-width: 660px !important;
+  }
+
+  /* Status Badges wrapping cleanly */
+  .rad-badge-pneumonia,
+  .rad-badge-normal,
+  .rad-badge-agree,
+  .rad-badge-disagree {
+    white-space: normal !important;
+    display: inline-block !important;
+    line-height: 1.3 !important;
+    max-width: 100% !important;
+  }
+
+  /* Admin tabs horizontal touch scrolling */
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .overflow-auto > .glass-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
   }
 }
+
+/* Narrow Phone Viewports (e.g. Android devices 360px - 480px) */
+@media (max-width: 480px) {
+  .rad-card,
+  .glass-card,
+  .card,
+  .pacs-card {
+    padding: 1.15rem 0.85rem !important;
+    border-radius: 14px !important;
+  }
+
+  .rad-card h3 {
+    font-size: 1.25rem !important;
+  }
+
+  .rad-card h4 {
+    font-size: 1.15rem !important;
+  }
+
+  .rad-card h5 {
+    font-size: 1rem !important;
+  }
+
+  .rad-card h6 {
+    font-size: 0.88rem !important;
+  }
+
+  .pacs-viewer-container {
+    min-height: 220px !important;
+  }
+
+  .pacs-image-layer {
+    max-height: 260px !important;
+  }
+
+  /* Make sure buttons in footers and toolbars don't shrink awkwardly */
+  .glass-btn {
+    min-height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .glass-btn.small {
+    padding: 5px 8px !important;
+    font-size: 0.74rem !important;
+  }
+
+  /* Form Controls */
+  .form-control,
+  .form-select {
+    font-size: 0.88rem !important;
+  }
+}
+
 

@@ -188,9 +188,9 @@ const Reports = () => {
                         <span className="text-secondary extra-small fw-bold text-uppercase d-block mb-1">
                           Diagnostic Status
                         </span>
-                        <span className={`badge ${isPneumonia ? 'rad-badge-pneumonia' : 'rad-badge-normal'} fs-6 px-3 py-1.5`}>
+                        <span className={`badge ${isPneumonia ? 'rad-badge-pneumonia' : 'rad-badge-normal'} fs-6 px-3 py-1.5 text-wrap text-start`}>
                           <i className={`fas ${isPneumonia ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-1.5`}></i>
-                          {isPneumonia ? 'PNEUMONIA' : 'NORMAL'}
+                          {isPneumonia ? 'Pneumonia Suspected — Further Clinical Evaluation Required' : 'Normal'}
                         </span>
                       </div>
                       <div className="text-end">

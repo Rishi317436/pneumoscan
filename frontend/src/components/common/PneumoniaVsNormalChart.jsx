@@ -283,7 +283,7 @@ const PneumoniaVsNormalChart = ({
                         boxShadow: colors.pneumoniaBarGlow
                       }}
                     ></span>
-                    <strong style={{ color: colors.text, fontSize: '0.92rem' }}>Pneumonia-Positive</strong>
+                    <strong style={{ color: colors.text, fontSize: '0.92rem' }}>Pneumonia Suspected</strong>
                   </div>
                   <span className="badge rounded-pill" style={{ background: 'rgba(244, 63, 94, 0.15)', color: colors.pneumoniaBar, border: `1px solid ${colors.pneumoniaBar}` }}>
                     {pneumoniaPct}%
@@ -295,7 +295,7 @@ const PneumoniaVsNormalChart = ({
                     {pneumoniaCount}
                   </span>
                   <span className="extra-small" style={{ color: colors.muted }}>
-                    Focal consolidation / opacities
+                    Focal consolidation / opacities (Eval Req.)
                   </span>
                 </div>
 

@@ -17,7 +17,7 @@ const Footer = () => {
             </p>
           </div>
           <div className="col-md-6 text-center text-md-end">
-            <div className="d-flex align-items-center justify-content-center justify-content-md-end gap-3 mb-2">
+            <div className="d-flex align-items-center justify-content-center justify-content-md-end gap-2 gap-sm-3 mb-2 flex-wrap">
               <span className="d-inline-flex align-items-center gap-1.5 extra-small text-light opacity-85" style={{ fontSize: '0.825rem' }}>
                 <span className="pulse-dot"></span> System Engine: Active
               </span>

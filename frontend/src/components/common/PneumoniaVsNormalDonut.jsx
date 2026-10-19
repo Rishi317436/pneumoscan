@@ -259,8 +259,8 @@ const PneumoniaVsNormalDonut = ({
                     }}
                   ></span>
                   <div>
-                    <strong className="text-white small d-block" style={{ fontSize: '12px' }}>Pneumonia Positive</strong>
-                    <span className="text-secondary extra-small font-monospace">Infiltrate / Opacity</span>
+                    <strong className="text-white small d-block" style={{ fontSize: '12px' }}>Pneumonia Suspected</strong>
+                    <span className="text-secondary extra-small font-monospace">Infiltrate / Opacity (Eval Req.)</span>
                   </div>
                 </div>
                 <div className="text-end font-monospace">

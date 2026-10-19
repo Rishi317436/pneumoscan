@@ -111,12 +111,12 @@ const ResultsHistory = () => {
                           </td>
                           <td>
                             {manualPred === 'PNEUMONIA' ? (
-                              <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5">
-                                <i className="fas fa-exclamation-triangle me-1"></i> PNEUMONIA
+                              <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 text-wrap text-start">
+                                <i className="fas fa-exclamation-triangle me-1"></i> Pneumonia Suspected — Further Clinical Evaluation Required
                               </span>
                             ) : manualPred === 'NORMAL' ? (
                               <span className="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5">
-                                <i className="fas fa-check-circle me-1"></i> NORMAL
+                                <i className="fas fa-check-circle me-1"></i> Normal
                               </span>
                             ) : (
                               <span className="badge bg-secondary-subtle text-secondary px-2.5 py-1.5">N/A</span>
@@ -127,12 +127,12 @@ const ResultsHistory = () => {
                           </td>
                           <td>
                             {mlPred === 'PNEUMONIA' ? (
-                              <span className="badge bg-danger text-white px-2.5 py-1.5">
-                                <i className="fas fa-robot me-1"></i> PNEUMONIA
+                              <span className="badge bg-danger text-white px-2.5 py-1.5 text-wrap text-start">
+                                <i className="fas fa-robot me-1"></i> Pneumonia Suspected — Further Clinical Evaluation Required
                               </span>
                             ) : mlPred === 'NORMAL' ? (
                               <span className="badge bg-success text-white px-2.5 py-1.5">
-                                <i className="fas fa-robot me-1"></i> NORMAL
+                                <i className="fas fa-robot me-1"></i> Normal
                               </span>
                             ) : (
                               <span className="badge bg-secondary px-2.5 py-1.5">N/A</span>

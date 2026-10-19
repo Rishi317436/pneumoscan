@@ -170,10 +170,18 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
                 const mlConf = typeof pyResult.mlDetection?.confidence === 'number' ? (pyResult.mlDetection.confidence * 100).toFixed(1) + '%' : 'N/A';
                 const agree = pyResult.comparison?.agreementStatus || 'N/A';
 
+                const formatClinicalOutcome = (p) => {
+                    if (!p) return 'N/A';
+                    const u = String(p).toUpperCase();
+                    if (u === 'PNEUMONIA' || u.includes('PNEUMONIA')) return 'Pneumonia Suspected — Further Clinical Evaluation Required';
+                    if (u === 'NORMAL') return 'Normal';
+                    return p;
+                };
+
                 const report = new Report({
                     detectionId: detection._id,
                     userId: userId,
-                    findings: `Deep Learning (DenseNet-121): ${mlPred} (Confidence: ${mlConf}). Traditional DIP Analysis: ${manPred}. Agreement: ${agree}.`,
+                    findings: `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (Confidence: ${mlConf}). Traditional DIP Analysis: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`,
                     recommendations: 'Results are for computational comparison and research assistance. Consult with a qualified physician or radiologist for clinical diagnosis.'
                 });
                 await report.save();

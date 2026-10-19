@@ -177,12 +177,12 @@ const ResultDetail = () => {
               <div className="text-center mb-3 p-3 bg-light rounded-3">
                 <span className="text-secondary extra-small text-uppercase fw-bold d-block mb-1">Traditional Prediction</span>
                 {manual.prediction === 'PNEUMONIA' ? (
-                  <span className="badge bg-danger px-3 py-2 fs-6">
-                    <i className="fas fa-exclamation-triangle me-1"></i> PNEUMONIA
+                  <span className="badge bg-danger px-3 py-2 fs-6 text-wrap text-start">
+                    <i className="fas fa-exclamation-triangle me-1"></i> Pneumonia Suspected — Further Clinical Evaluation Required
                   </span>
                 ) : manual.prediction === 'NORMAL' ? (
                   <span className="badge bg-success px-3 py-2 fs-6">
-                    <i className="fas fa-check-circle me-1"></i> NORMAL
+                    <i className="fas fa-check-circle me-1"></i> Normal
                   </span>
                 ) : (
                   <span className="badge bg-secondary px-3 py-2 fs-6">N/A</span>
@@ -313,12 +313,12 @@ const ResultDetail = () => {
               <div className="text-center mb-3 p-3 bg-light rounded-3">
                 <span className="text-secondary extra-small text-uppercase fw-bold d-block mb-1">Deep Learning Prediction</span>
                 {ml.prediction === 'PNEUMONIA' ? (
-                  <span className="badge bg-danger px-3 py-2 fs-6">
-                    <i className="fas fa-robot me-1"></i> PNEUMONIA
+                  <span className="badge bg-danger px-3 py-2 fs-6 text-wrap text-start">
+                    <i className="fas fa-robot me-1"></i> Pneumonia Suspected — Further Clinical Evaluation Required
                   </span>
                 ) : ml.prediction === 'NORMAL' ? (
                   <span className="badge bg-success px-3 py-2 fs-6">
-                    <i className="fas fa-check-circle me-1"></i> NORMAL
+                    <i className="fas fa-check-circle me-1"></i> Normal
                   </span>
                 ) : (
                   <span className="badge bg-secondary px-3 py-2 fs-6">N/A</span>
@@ -408,7 +408,7 @@ const ResultDetail = () => {
                       <td className="text-start ps-2 fw-semibold">Traditional DIP</td>
                       <td>
                         {manual.prediction === 'PNEUMONIA' ? (
-                          <span className="badge bg-danger-subtle text-danger">Pneumonia</span>
+                          <span className="badge bg-danger-subtle text-danger">Pneumonia Suspected — Further Clinical Evaluation Required</span>
                         ) : (
                           <span className="badge bg-success-subtle text-success">Normal</span>
                         )}
@@ -419,7 +419,7 @@ const ResultDetail = () => {
                       <td className="text-start ps-2 fw-semibold">DenseNet121</td>
                       <td>
                         {ml.prediction === 'PNEUMONIA' ? (
-                          <span className="badge bg-danger-subtle text-danger">Pneumonia</span>
+                          <span className="badge bg-danger-subtle text-danger">Pneumonia Suspected — Further Clinical Evaluation Required</span>
                         ) : (
                           <span className="badge bg-success-subtle text-success">Normal</span>
                         )}
