@@ -91,7 +91,7 @@ const RadiologyNavbar = () => {
             </div>
             <div>
               <span className="fw-extrabold text-white">Pneumo<span style={{ color: 'var(--rad-cyan, #39ff14)' }}>Scan</span></span>
-              <span className="text-secondary extra-small fw-semibold ms-2 d-none d-md-inline" style={{ fontSize: '0.75rem', letterSpacing: '0.04em' }}>
+              <span className="text-secondary extra-small fw-semibold ms-2 d-none d-xl-inline" style={{ fontSize: '0.75rem', letterSpacing: '0.04em' }}>
                 CHEST X-RAY CAD & PACS
               </span>
             </div>
@@ -153,7 +153,7 @@ const RadiologyNavbar = () => {
                 <button
                   type="button"
                   onClick={() => setShowSampleModal(true)}
-                  className="rad-btn-outline extra-small py-1 px-2.5 ms-1 d-inline-flex align-items-center gap-1.5"
+                  className="rad-btn-outline extra-small py-1 px-2.5 ms-1 d-inline-flex align-items-center gap-1.5 flex-shrink-0 text-nowrap"
                   style={{
                     borderColor: 'var(--rad-cyan, #39ff14)',
                     color: 'var(--rad-cyan, #39ff14)',
@@ -162,16 +162,17 @@ const RadiologyNavbar = () => {
                   title="Download verified sample chest radiographs (Pneumonia & Normal)"
                 >
                   <i className="fas fa-download"></i>
-                  <span>Download Sample X-Rays</span>
+                  <span className="d-none d-xxl-inline">Download Sample X-Rays</span>
+                  <span className="d-inline d-xxl-none">Sample Scans</span>
                 </button>
               </nav>
 
-              <div className="vr d-none d-lg-block mx-2 opacity-25" style={{ height: '24px', backgroundColor: 'var(--rad-border)' }}></div>
+              <div className="vr d-none d-lg-block mx-1.5 opacity-25" style={{ height: '24px', backgroundColor: 'var(--rad-border)' }}></div>
 
               {/* Instant Theme Toggle Button */}
               <button
                 onClick={toggleTheme}
-                className="glass-btn small"
+                className="glass-btn small flex-shrink-0"
                 title={isLight ? 'Switch to dark theme' : 'Switch to light theme'}
                 style={{ padding: '6px 10px', fontSize: '0.85rem' }}
               >
@@ -179,27 +180,39 @@ const RadiologyNavbar = () => {
                 <span className="d-none d-sm-inline ms-1">{isLight ? 'Light' : 'Dark'}</span>
               </button>
 
-              {/* Clinician Pill (Hidden on narrowest mobile, visible >= sm) */}
-              <div className="d-none d-sm-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill glass-card" style={{ border: '1px solid rgba(57, 255, 20, 0.35)' }}>
+              {/* Clinician Pill (Hidden on narrowest mobile, visible >= md) */}
+              <div className="d-none d-md-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill glass-card text-nowrap flex-shrink-1" style={{ border: '1px solid rgba(57, 255, 20, 0.35)', maxWidth: '210px' }}>
                 {user.profilePhoto ? (
                   <img
                     src={user.profilePhoto}
                     alt={user.name}
-                    className="rounded-circle"
-                    style={{ width: '22px', height: '22px', objectFit: 'cover', border: '1px solid var(--rad-cyan, #39ff14)' }}
+                    className="rounded-circle flex-shrink-0"
+                    style={{ width: '20px', height: '20px', objectFit: 'cover', border: '1px solid var(--rad-cyan, #39ff14)' }}
                   />
                 ) : (
-                  <span className="pulse-dot" style={{ backgroundColor: 'var(--rad-cyan, #39ff14)' }}></span>
+                  <span className="pulse-dot flex-shrink-0" style={{ backgroundColor: 'var(--rad-cyan, #39ff14)' }}></span>
                 )}
-                <span className="fw-bold text-white small text-truncate" style={{ maxWidth: '170px' }}>{user.name}</span>
-                <span className="badge extra-small text-uppercase d-none d-md-inline" style={{ background: 'rgba(57, 255, 20, 0.18)', color: 'var(--rad-cyan, #39ff14)' }}>
+                <span className="fw-bold text-white small text-truncate" style={{ maxWidth: '120px' }}>{user.name}</span>
+                <span className="badge extra-small text-uppercase d-none d-xl-inline" style={{ background: 'rgba(57, 255, 20, 0.18)', color: 'var(--rad-cyan, #39ff14)' }}>
                   {user.role}
                 </span>
               </div>
 
-              {/* Desktop Logout Button */}
-              <button onClick={handleLogout} className="glass-btn small d-none d-lg-inline-flex" title="Log Out">
-                <i className="fas fa-power-off text-danger"></i>
+              {/* Explicit Desktop & Tablet Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1 text-nowrap flex-shrink-0 ms-1"
+                title="Log Out of Session"
+                style={{
+                  fontSize: '0.82rem',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  borderColor: 'rgba(239, 68, 68, 0.55)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.12)'
+                }}
+              >
+                <i className="fas fa-sign-out-alt"></i>
+                <span className="d-none d-sm-inline">Logout</span>
               </button>
 
               {/* Mobile Hamburger Toggle Button */}
