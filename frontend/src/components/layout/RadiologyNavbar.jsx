@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
+import SampleScansModal from '../common/SampleScansModal';
 
 const RadiologyNavbar = () => {
   const { user, logout } = useAuth();
@@ -14,6 +15,7 @@ const RadiologyNavbar = () => {
   const isLight = theme === 'light';
   const [activeSection, setActiveSection] = useState('workstation');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showSampleModal, setShowSampleModal] = useState(false);
 
   // Close mobile menu on route or hash change
   useEffect(() => {
@@ -147,6 +149,21 @@ const RadiologyNavbar = () => {
                     <i className="fas fa-shield-alt"></i> Admin Hub
                   </Link>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowSampleModal(true)}
+                  className="rad-btn-outline extra-small py-1 px-2.5 ms-1 d-inline-flex align-items-center gap-1.5"
+                  style={{
+                    borderColor: 'var(--rad-cyan, #39ff14)',
+                    color: 'var(--rad-cyan, #39ff14)',
+                    fontWeight: '600'
+                  }}
+                  title="Download verified sample chest radiographs (Pneumonia & Normal)"
+                >
+                  <i className="fas fa-download"></i>
+                  <span>Download Sample X-Rays</span>
+                </button>
               </nav>
 
               <div className="vr d-none d-lg-block mx-2 opacity-25" style={{ height: '24px', backgroundColor: 'var(--rad-border)' }}></div>
@@ -295,6 +312,16 @@ const RadiologyNavbar = () => {
                   <span>Admin Hub</span>
                 </Link>
               )}
+
+              <button
+                type="button"
+                onClick={() => { setMobileMenuOpen(false); setShowSampleModal(true); }}
+                className="rad-mobile-nav-item text-start border-0 bg-transparent"
+                style={{ color: 'var(--rad-cyan, #39ff14)' }}
+              >
+                <i className="fas fa-download me-2.5 text-cyan" style={{ color: 'var(--rad-cyan)' }}></i>
+                <span>Download Sample X-Rays</span>
+              </button>
             </nav>
 
             {/* Mobile Actions: Theme + Logout */}
@@ -315,6 +342,9 @@ const RadiologyNavbar = () => {
           </div>
         </>
       )}
+
+      {/* Sample Radiographs Download Modal */}
+      <SampleScansModal isOpen={showSampleModal} onClose={() => setShowSampleModal(false)} />
     </>
   );
 };

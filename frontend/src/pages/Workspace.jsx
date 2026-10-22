@@ -7,6 +7,7 @@ import IntermediateStagesCard from '../components/workspace/IntermediateStagesCa
 import { useUploadScan } from '../hooks/useScans';
 import { scanAPI } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { isDIPAdjudicated } from '../utils/adjudication';
 import RadiologyDashboard from './RadiologyDashboard';
 import WorklistHistory from './WorklistHistory';
 import ClinicalFeedback from './ClinicalFeedback';
@@ -179,37 +180,45 @@ const Workspace = () => {
       {/* Multi-Stage Inference Stepper Tracker */}
       <PredictionProgressTracker isProcessing={isProcessing} />
 
-      {activeDetection ? (
-        <div className="row g-4">
-          {/* Active Study: Interactive Chest X-Ray Viewer & Intermediate Stages */}
-          <div className="col-xl-7">
-            <InteractiveXrayViewer
-              originalImage={activeDetection.originalImage}
-              gradcamImage={activeDetection.gradcamImage}
-              zoneOverlayImage={activeDetection.manualDetection?.zoneOverlayImage}
-              title="Active Study: Chest X-Ray"
-              filename={activeDetection.scanId?.filename || selectedFile?.name || 'Patient_Scan.jpeg'}
-            />
-            <IntermediateStagesCard
-              intermediateStages={activeDetection.manualDetection?.intermediate_stages}
-            />
-          </div>
+      {activeDetection ? (() => {
+        const isAdjudicated = isDIPAdjudicated(
+          activeDetection.manualDetection,
+          activeDetection.mlDetection,
+          activeDetection.comparison
+        );
 
-          {/* Right Column: AI Confidence, Saliency Breakdown & Concordance */}
-          <div className="col-xl-5 d-flex flex-column gap-4">
-            <AIConfidenceGauge
-              mlDetection={activeDetection.mlDetection}
-              manualDetection={activeDetection.manualDetection}
-              comparison={activeDetection.comparison}
-            />
-            <DualMethodComparisonCard
-              manualDetection={activeDetection.manualDetection}
-              mlDetection={activeDetection.mlDetection}
-              comparison={activeDetection.comparison}
-            />
+        return (
+          <div className="row g-4">
+            {/* Active Study: Interactive Chest X-Ray Viewer & Intermediate Stages */}
+            <div className="col-xl-7">
+              <InteractiveXrayViewer
+                originalImage={activeDetection.originalImage}
+                gradcamImage={activeDetection.gradcamImage}
+                zoneOverlayImage={activeDetection.manualDetection?.zoneOverlayImage}
+                title="Active Study: Chest X-Ray"
+                filename={activeDetection.scanId?.filename || selectedFile?.name || 'Patient_Scan.jpeg'}
+              />
+              <IntermediateStagesCard
+                intermediateStages={activeDetection.manualDetection?.intermediate_stages}
+              />
+            </div>
+
+            {/* Right Column: AI Confidence, Saliency Breakdown & Concordance */}
+            <div className="col-xl-5 d-flex flex-column gap-4">
+              <AIConfidenceGauge
+                mlDetection={activeDetection.mlDetection}
+                manualDetection={activeDetection.manualDetection}
+                comparison={activeDetection.comparison}
+              />
+              <DualMethodComparisonCard
+                manualDetection={activeDetection.manualDetection}
+                mlDetection={activeDetection.mlDetection}
+                comparison={activeDetection.comparison}
+              />
+            </div>
           </div>
-        </div>
-      ) : (
+        );
+      })() : (
         /* Full-Width Expanded Holographic Upload / Mount Dropzone Card */
         <div className="row justify-content-center">
           <div className="col-12 col-xl-10">

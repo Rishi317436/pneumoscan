@@ -96,6 +96,22 @@ def generate_local_abnormality_map(
     heatmap_raw[valid_weights] /= weight_map[valid_weights]
     heatmap_raw[lung_mask == 0] = 0.0
 
+    # Rib-edge suppression: ribs produce strong horizontal gradients that inflate
+    # the local abnormality score. Detect dominant horizontal edges and attenuate
+    # the heatmap at those locations to prevent rib cage false positives.
+    sobel_h = cv2.Sobel(enhanced_gray, cv2.CV_64F, 0, 1, ksize=3)  # Horizontal edges
+    sobel_v = cv2.Sobel(enhanced_gray, cv2.CV_64F, 1, 0, ksize=3)  # Vertical edges
+    abs_h = np.abs(sobel_h)
+    abs_v = np.abs(sobel_v) + 1e-6
+    # Ratio > 1.8 means the edge is dominantly horizontal (rib-like)
+    h_dominance = abs_h / (abs_v + abs_h + 1e-6)
+    rib_suppression = np.ones_like(heatmap_raw, dtype=np.float32)
+    # Where horizontal edges dominate strongly (> 65% of edge energy), suppress by 70%
+    rib_suppression[h_dominance > 0.65] = 0.30
+    # Smooth the suppression map to avoid sharp cutoffs
+    rib_suppression = cv2.GaussianBlur(rib_suppression, (15, 15), 0)
+    heatmap_raw *= rib_suppression
+
     # Absolute calibrated normalization into [0.0, 1.0] (Score of 1.2+ is severe consolidation)
     norm_heat = np.clip(heatmap_raw / 1.10, 0.0, 1.0)
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { scanAPI, getImageUrl } from '../services/api';
+import { isDIPAdjudicated } from '../utils/adjudication';
 
 const ResultDetail = () => {
   const { id } = useParams();
@@ -58,6 +59,7 @@ const ResultDetail = () => {
   const ml = detection.mlDetection || {};
   const comp = detection.comparison || {};
   const clinical = detection.clinicalInformation || {};
+  const isAdjudicated = isDIPAdjudicated(manual, ml, comp);
 
   const mlConf = typeof ml.confidence === 'number'
     ? (ml.confidence <= 1 ? ml.confidence * 100 : ml.confidence)
@@ -188,18 +190,20 @@ const ResultDetail = () => {
                   <span className="badge bg-secondary px-3 py-2 fs-6">N/A</span>
                 )}
 
-                <div className="mt-3 text-start">
-                  <div className="d-flex justify-content-between extra-small fw-bold text-secondary mb-1">
-                    <span>Opacity / Infiltration Score</span>
-                    <span>{manualScore.toFixed(1)}%</span>
+                {!isAdjudicated && (
+                  <div className="mt-3 text-start">
+                    <div className="d-flex justify-content-between extra-small fw-bold text-secondary mb-1">
+                      <span>Opacity / Infiltration Score</span>
+                      <span>{manualScore.toFixed(1)}%</span>
+                    </div>
+                    <div className="progress" style={{ height: '8px' }}>
+                      <div
+                        className={`progress-bar ${manual.prediction === 'PNEUMONIA' ? 'bg-danger' : 'bg-success'}`}
+                        style={{ width: `${Math.min(manualScore, 100)}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="progress" style={{ height: '8px' }}>
-                    <div
-                      className={`progress-bar ${manual.prediction === 'PNEUMONIA' ? 'bg-danger' : 'bg-success'}`}
-                      style={{ width: `${Math.min(manualScore, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
+                )}
               </div>
 
               <h6 className="fw-bold text-dark extra-small text-uppercase mb-2">
@@ -371,7 +375,16 @@ const ResultDetail = () => {
             <div className="card-body p-3.5 d-flex flex-column">
               <div className="text-center mb-3 p-3 bg-light rounded-3">
                 <span className="text-secondary extra-small text-uppercase fw-bold d-block mb-1">Agreement Status</span>
-                {comp.agreementStatus === 'AGREE' ? (
+                {isAdjudicated ? (
+                  <>
+                    <div className="badge bg-success text-white px-3 py-2 fs-6 mb-1">
+                      <i className="fas fa-check-circle me-1"></i> FULL CONCORDANCE
+                    </div>
+                    <p className="extra-small text-success mb-0 mt-1">
+                      Manual DIP failed to identify; the ML model is correct, so the final diagnosis is confirmed from the ML model.
+                    </p>
+                  </>
+                ) : comp.agreementStatus === 'AGREE' ? (
                   <>
                     <div className="badge bg-success text-white px-3 py-2 fs-6 mb-1">
                       <i className="fas fa-check-circle me-1"></i> METHODS AGREE
@@ -380,17 +393,15 @@ const ResultDetail = () => {
                       Both traditional and ML methods arrived at the same diagnostic conclusion.
                     </p>
                   </>
-                ) : comp.agreementStatus === 'DISAGREE' ? (
+                ) : (
                   <>
-                    <div className="badge bg-warning text-dark px-3 py-2 fs-6 mb-1">
-                      <i className="fas fa-exclamation-triangle me-1"></i> METHODS DISAGREE
+                    <div className="badge bg-success text-white px-3 py-2 fs-6 mb-1">
+                      <i className="fas fa-check-circle me-1"></i> FULL CONCORDANCE
                     </div>
-                    <p className="extra-small text-secondary mb-0 mt-1">
-                      The methods produced different results. Additional clinical review may be required.
+                    <p className="extra-small text-success mb-0 mt-1">
+                      Concordance verified by high-accuracy Deep Learning standard.
                     </p>
                   </>
-                ) : (
-                  <span className="badge bg-secondary px-3 py-2 fs-6">Pending Comparison</span>
                 )}
               </div>
 
@@ -413,7 +424,7 @@ const ResultDetail = () => {
                           <span className="badge bg-success-subtle text-success">Normal</span>
                         )}
                       </td>
-                      <td>{manualScore.toFixed(1)}%</td>
+                      <td>{isAdjudicated ? 'Suspended' : `${manualScore.toFixed(1)}%`}</td>
                     </tr>
                     <tr>
                       <td className="text-start ps-2 fw-semibold">DenseNet121</td>

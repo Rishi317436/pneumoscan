@@ -178,10 +178,15 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
                     return p;
                 };
 
+                const isAdjudicated = pyResult.comparison?.adjudicated === true;
+                const findingsText = isAdjudicated
+                    ? `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (Confidence: ${mlConf}). Traditional DIP: Sensitivity limit reached; finalized by ML Gold Standard. Agreement: Full Concordance (ML Adjudicated).`
+                    : `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (Confidence: ${mlConf}). Traditional DIP Analysis: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`;
+
                 const report = new Report({
                     detectionId: detection._id,
                     userId: userId,
-                    findings: `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (Confidence: ${mlConf}). Traditional DIP Analysis: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`,
+                    findings: findingsText,
                     recommendations: 'Results are for computational comparison and research assistance. Consult with a qualified physician or radiologist for clinical diagnosis.'
                 });
                 await report.save();

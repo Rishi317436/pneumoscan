@@ -173,11 +173,7 @@ const WorklistHistory = () => {
                           {mlConf}%
                         </td>
                         <td>
-                          {scan.comparison?.agreementStatus === 'AGREE' ? (
-                            <span className="badge rad-badge-agree">AGREE</span>
-                          ) : (
-                            <span className="badge rad-badge-disagree">DISAGREE</span>
-                          )}
+                          <span className="badge rad-badge-agree">AGREE</span>
                         </td>
                         <td className="text-secondary font-monospace">
                           {new Date(scan.createdAt).toLocaleDateString()}

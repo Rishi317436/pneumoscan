@@ -10,6 +10,11 @@ const ChestXrayDetectionSchema = new mongoose.Schema({
     manualDetection: {
         prediction: { type: String },
         score: { type: Number },
+        confidence: { type: Number },
+        rawPrediction: { type: String },
+        rawScore: { type: Number },
+        adjudicated: { type: Boolean, default: false },
+        adjudicationNote: { type: String },
         clinical_verdict: { type: String },
         decisionExplanation: { type: String },
         abnormal_zone_count: { type: Number },
@@ -27,6 +32,9 @@ const ChestXrayDetectionSchema = new mongoose.Schema({
     },
     comparison: {
         agreementStatus: { type: String, index: true },
+        adjudicated: { type: Boolean, default: false },
+        adjudicationReason: { type: String },
+        originalManualPrediction: { type: String },
         scoreDifference: { type: Number },
         experimentalCombinedScore: { type: Number }
     },
@@ -41,7 +49,7 @@ const ChestXrayDetectionSchema = new mongoose.Schema({
     acquisitionClassification: { type: String },
     etiologyPrediction: { type: String },
     createdAt: { type: Date, default: Date.now, index: true }
-});
+}, { strict: false });
 
 ChestXrayDetectionSchema.pre('validate', function(next) {
     if (this.user && !this.userId) {

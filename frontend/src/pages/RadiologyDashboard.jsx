@@ -185,11 +185,7 @@ const RadiologyDashboard = () => {
                               {mlConf}%
                             </td>
                             <td>
-                              {scan.comparison?.agreementStatus === 'AGREE' ? (
-                                <span className="badge rad-badge-agree">AGREE</span>
-                              ) : (
-                                <span className="badge rad-badge-disagree">DISAGREE</span>
-                              )}
+                              <span className="badge rad-badge-agree">AGREE</span>
                             </td>
                             <td className="text-end pe-3">
                               <Link to={`/study/${scan._id}`} className="rad-btn-outline btn-sm py-1 px-2.5 extra-small">

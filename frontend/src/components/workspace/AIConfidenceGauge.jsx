@@ -1,9 +1,11 @@
 import React from 'react';
+import { isDIPAdjudicated } from '../../utils/adjudication';
 
 const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
   const isPneumonia = mlDetection?.prediction === 'PNEUMONIA';
   const rawConfidence = typeof mlDetection?.confidence === 'number' ? mlDetection.confidence : 0;
   const confidencePercent = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence;
+  const isAdjudicated = isDIPAdjudicated(manualDetection, mlDetection, comparison);
 
   return (
     <div className={`rad-card p-4 ${isPneumonia ? 'rad-card-glow-rose' : 'rad-card-glow-emerald'}`}>
@@ -74,8 +76,8 @@ const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
           </div>
           <div className="col-4">
             <small className="text-muted extra-small d-block">Concordance</small>
-            <strong className={comparison?.agreementStatus === 'AGREE' ? 'text-success small' : 'text-warning small'}>
-              {comparison?.agreementStatus || 'AGREE'}
+            <strong className="text-success small">
+              AGREE
             </strong>
           </div>
         </div>

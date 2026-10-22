@@ -126,23 +126,23 @@ def score_all_zones(
         supporting_reasons = []
         agreeing_groups = 0
 
-        if evidence_intensity >= 0.40:
+        if evidence_intensity >= 0.38:
             agreeing_groups += 1
             supporting_reasons.append(f"Elevated radiopacity (mean: {hist['mean']} vs baseline: {round(lung_mean, 1)})")
 
-        if evidence_asymmetry >= 0.38:
+        if evidence_asymmetry >= 0.35:
             agreeing_groups += 1
             supporting_reasons.append(f"Bilateral asymmetry against opposite hemithorax ({round(asym_index * 100, 1)}%)")
 
-        if evidence_texture >= 0.40:
+        if evidence_texture >= 0.35:
             agreeing_groups += 1
             supporting_reasons.append(f"Textural disorder (LBP variance: {lbp_var}, GLCM contrast: {glcm_cont})")
 
-        if evidence_local >= 0.40:
+        if evidence_local >= 0.38:
             agreeing_groups += 1
             supporting_reasons.append("Localized heterogeneous windowed deviation detected")
 
-        if evidence_regions >= 0.38:
+        if evidence_regions >= 0.32:
             agreeing_groups += 1
             if is_left_cardiac and has_paracardiac_infiltrate:
                 supporting_reasons.append(f"Paracardiac consolidation: {cand_count} region(s) covering {round(cand_area_ratio * 100, 1)}% of zone")
@@ -170,16 +170,19 @@ def score_all_zones(
         )
         zone_score = round(float(total_weighted * 100.0), 1)
 
+        # Boost score if genuine multi-pixel candidate lesions were extracted
+        if cand_count >= 1 and cand_area_ratio >= 0.03:
+            zone_score = min(100.0, zone_score + 10.0)
+
         # ----------------------------------------------------
-        # Zone Classification Rule (Strict Threshold Synchronization)
+        # Zone Classification Rule
         # ----------------------------------------------------
-        if zone_score >= abnormal_threshold:
+        has_verified_lesions = (cand_count >= 1 and evidence_regions >= 0.32)
+
+        if (zone_score >= abnormal_threshold and agreeing_groups >= 3) or (has_verified_lesions and agreeing_groups >= 3 and zone_score >= 38.0):
             status = "ABNORMAL"
             status_color = "#EF4444" # Red
-        elif zone_score >= suspicious_threshold:
-            status = "SUSPICIOUS"
-            status_color = "#F59E0B" # Amber
-        elif agreeing_groups >= 3 and zone_score >= 38.0:
+        elif (zone_score >= suspicious_threshold and agreeing_groups >= 2) or (has_verified_lesions and agreeing_groups >= 2):
             status = "SUSPICIOUS"
             status_color = "#F59E0B" # Amber
         else:

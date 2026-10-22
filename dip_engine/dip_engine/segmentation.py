@@ -160,13 +160,13 @@ def extract_image_dependent_lung_fields(
     morph_kernel_size: int = 7
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]]:
     """
-    High-Precision Anatomical Lung Silhouette Segmentation.
-    Renders realistic, anatomically faithful lung shapes:
-    - Rounded apical domes beneath the clavicles
-    - Smoothly convex costal rib boundaries
-    - Deep acute costophrenic angles at lower-lateral bases
-    - Arched diaphragmatic domes
-    - Left cardiac notch with lingula projection
+    Genuine Image-Dependent Anatomical Lung Segmentation using Traditional DIP.
+    Uses rib-cage guided convex hull boundary extraction:
+    1. Intra-thoracic Otsu + adaptive thresholding to find dark lung fields
+    2. Convex hull enclosure to retain consolidated (white) pneumonia regions
+       within the anatomical lung boundary
+    3. Morphological refinement and bilateral hemithorax separation
+    4. Fallback to torso-bounded lateral rib contour if thresholding fails
     """
     h, w = enhanced_gray.shape
     total_pixels = h * w
@@ -184,82 +184,155 @@ def extract_image_dependent_lung_fields(
         act_w, act_h, mid_x = w, h, int(w * 0.50)
 
     spine_gap = max(3, int(act_w * 0.022))
+    min_lung_area = int(total_pixels * 0.025)
 
-    # Right Lung: Exact Anatomical Contour Points (Clockwise)
-    r_pts = [
-        [int(mid_x - act_w * 0.160), int(t_ymin + act_h * 0.115)], # Apex dome center
-        [int(mid_x - act_w * 0.120), int(t_ymin + act_h * 0.120)],
-        [int(mid_x - act_w * 0.080), int(t_ymin + act_h * 0.135)], # Apex medial curve
-        [int(mid_x - spine_gap),     int(t_ymin + act_h * 0.165)], # Superior paramedian spine
-        [int(mid_x - spine_gap),     int(t_ymin + act_h * 0.280)],
-        [int(mid_x - spine_gap),     int(t_ymin + act_h * 0.400)],
-        [int(mid_x - spine_gap - int(act_w*0.010)), int(t_ymin + act_h * 0.500)], # Right hilar notch
-        [int(mid_x - spine_gap),     int(t_ymin + act_h * 0.620)],
-        [int(mid_x - spine_gap),     int(t_ymin + act_h * 0.720)],
-        [int(mid_x - spine_gap - int(act_w*0.015)), int(t_ymin + act_h * 0.770)], # Cardiophrenic angle
-        [int(mid_x - act_w * 0.080), int(t_ymin + act_h * 0.760)], # Diaphragmatic dome crest
-        [int(mid_x - act_w * 0.140), int(t_ymin + act_h * 0.770)],
-        [int(mid_x - act_w * 0.200), int(t_ymin + act_h * 0.800)],
-        [int(mid_x - act_w * 0.260), int(t_ymin + act_h * 0.840)],
-        [int(t_xmin + act_w * 0.050), int(t_ymin + act_h * 0.880)], # Sharp Costophrenic angle
-        [int(t_xmin + act_w * 0.040), int(t_ymin + act_h * 0.820)], # Costal margin
-        [int(t_xmin + act_w * 0.035), int(t_ymin + act_h * 0.720)],
-        [int(t_xmin + act_w * 0.030), int(t_ymin + act_h * 0.600)], # Axillary mid-rib
-        [int(t_xmin + act_w * 0.035), int(t_ymin + act_h * 0.480)],
-        [int(t_xmin + act_w * 0.050), int(t_ymin + act_h * 0.360)],
-        [int(t_xmin + act_w * 0.080), int(t_ymin + act_h * 0.250)], # Upper rib cage
-        [int(t_xmin + act_w * 0.120), int(t_ymin + act_h * 0.170)], # Infraclavicular shoulder
-        [int(t_xmin + act_w * 0.160), int(t_ymin + act_h * 0.130)],
-    ]
+    # ------------------------------------------------------------------
+    # STEP 1: Intra-Thoracic Lung Field Thresholding
+    # ------------------------------------------------------------------
+    blur_pre = cv2.GaussianBlur(enhanced_gray, (7, 7), 0)
 
-    # Left Lung: Exact Anatomical Contour Points (Counter-Clockwise)
-    l_pts = [
-        [int(mid_x + act_w * 0.160), int(t_ymin + act_h * 0.115)], # Apex dome center
-        [int(t_xmax - act_w * 0.160), int(t_ymin + act_h * 0.130)],
-        [int(t_xmax - act_w * 0.120), int(t_ymin + act_h * 0.170)], # Infraclavicular shoulder
-        [int(t_xmax - act_w * 0.080), int(t_ymin + act_h * 0.250)], # Upper rib cage
-        [int(t_xmax - act_w * 0.050), int(t_ymin + act_h * 0.360)],
-        [int(t_xmax - act_w * 0.035), int(t_ymin + act_h * 0.480)],
-        [int(t_xmax - act_w * 0.030), int(t_ymin + act_h * 0.600)], # Axillary mid-rib
-        [int(t_xmax - act_w * 0.035), int(t_ymin + act_h * 0.720)],
-        [int(t_xmax - act_w * 0.040), int(t_ymin + act_h * 0.820)], # Costal margin
-        [int(t_xmax - act_w * 0.050), int(t_ymin + act_h * 0.880)], # Sharp Costophrenic angle
-        [int(mid_x + act_w * 0.260),  int(t_ymin + act_h * 0.840)], # Diaphragmatic arch
-        [int(mid_x + act_w * 0.200),  int(t_ymin + act_h * 0.800)],
-        [int(mid_x + act_w * 0.150),  int(t_ymin + act_h * 0.775)], # Lingula tip
-        [int(mid_x + act_w * 0.140),  int(t_ymin + act_h * 0.730)], # Cardiac notch lower sweep
-        [int(mid_x + act_w * 0.110),  int(t_ymin + act_h * 0.660)], # Left ventricular apex notch
-        [int(mid_x + act_w * 0.070),  int(t_ymin + act_h * 0.580)], # Pulmonary trunk indentation
-        [int(mid_x + act_w * 0.050),  int(t_ymin + act_h * 0.500)],
-        [int(mid_x + act_w * 0.060),  int(t_ymin + act_h * 0.420)], # Aortic arch indentation
-        [int(mid_x + spine_gap),     int(t_ymin + act_h * 0.320)], # Superior mediastinal margin
-        [int(mid_x + spine_gap),     int(t_ymin + act_h * 0.200)],
-        [int(mid_x + spine_gap),     int(t_ymin + act_h * 0.150)],
-        [int(mid_x + act_w * 0.080), int(t_ymin + act_h * 0.130)],
-        [int(mid_x + act_w * 0.120), int(t_ymin + act_h * 0.118)],
-    ]
+    # Compute Otsu threshold on pixels strictly inside the torso
+    torso_pixels = blur_pre[torso_mask > 0]
+    if len(torso_pixels) > 100:
+        otsu_val, _ = cv2.threshold(torso_pixels, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    else:
+        otsu_val = 110.0
 
-    r_arr = np.array(r_pts, dtype=np.int32)
-    l_arr = np.array(l_pts, dtype=np.int32)
+    # Lungs are darker (more radiolucent) than thoracic spine, ribs, and soft tissue
+    lung_raw_thresh = np.zeros((h, w), dtype=np.uint8)
+    lung_raw_thresh[(blur_pre < otsu_val) & (torso_mask > 0)] = 255
+
+    # Adaptive threshold to capture peripheral pleural margins
+    adapt_thresh = cv2.adaptiveThreshold(
+        blur_pre, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 35, 3
+    )
+    adapt_thresh[torso_mask == 0] = 0
+
+    combined_thresh = cv2.bitwise_or(lung_raw_thresh, adapt_thresh)
+
+    # ------------------------------------------------------------------
+    # STEP 2: Morphological Refinement
+    # ------------------------------------------------------------------
+    kernel_open = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+    morph_open = cv2.morphologyEx(combined_thresh, cv2.MORPH_OPEN, kernel_open, iterations=1)
+
+    kernel_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (19, 19))
+    morph_closed = cv2.morphologyEx(morph_open, cv2.MORPH_CLOSE, kernel_close, iterations=2)
+
+    # ------------------------------------------------------------------
+    # STEP 3: Connected Component Analysis & Bilateral Isolation
+    # ------------------------------------------------------------------
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(morph_closed, connectivity=8)
+
+    max_lung_area = int(total_pixels * 0.40)
+    candidates = []
+    for label_id in range(1, num_labels):
+        area = int(stats[label_id, cv2.CC_STAT_AREA])
+        cx, cy = centroids[label_id]
+        if min_lung_area <= area <= max_lung_area:
+            if (0.05 * w < cx < 0.95 * w) and (0.10 * h < cy < 0.90 * h):
+                candidates.append({
+                    "label_id": label_id, "area": area,
+                    "centroid": (float(cx), float(cy)),
+                    "bbox": (int(stats[label_id, cv2.CC_STAT_LEFT]),
+                             int(stats[label_id, cv2.CC_STAT_TOP]),
+                             int(stats[label_id, cv2.CC_STAT_WIDTH]),
+                             int(stats[label_id, cv2.CC_STAT_HEIGHT]))
+                })
+
+    candidates = sorted(candidates, key=lambda c: c["area"], reverse=True)
 
     right_lung_raw = np.zeros((h, w), dtype=np.uint8)
     left_lung_raw = np.zeros((h, w), dtype=np.uint8)
-    cv2.fillPoly(right_lung_raw, [r_arr], 255)
-    cv2.fillPoly(left_lung_raw, [l_arr], 255)
 
-    # 1. Intersect with Patient Torso to prevent leakage
+    right_candidates = [c for c in candidates if c["centroid"][0] < mid_x + 10]
+    left_candidates = [c for c in candidates if c["centroid"][0] >= mid_x - 10]
+
+    if right_candidates:
+        right_lung_raw[labels == right_candidates[0]["label_id"]] = 255
+        if len(right_candidates) > 1 and right_candidates[1]["area"] > min_lung_area:
+            right_lung_raw[labels == right_candidates[1]["label_id"]] = 255
+
+    if left_candidates:
+        left_lung_raw[labels == left_candidates[0]["label_id"]] = 255
+        if len(left_candidates) > 1 and left_candidates[1]["area"] > min_lung_area:
+            left_lung_raw[labels == left_candidates[1]["label_id"]] = 255
+
+    # Handle merged single-component spanning the mediastinum
+    if (np.sum(right_lung_raw) == 0 or np.sum(left_lung_raw) == 0) and len(candidates) > 0:
+        top_cand = candidates[0]
+        if top_cand["bbox"][2] > w * 0.35:
+            full_mask = (labels == top_cand["label_id"]).astype(np.uint8) * 255
+            right_lung_raw = full_mask.copy()
+            right_lung_raw[:, int(mid_x):] = 0
+            left_lung_raw = full_mask.copy()
+            left_lung_raw[:, :int(mid_x)] = 0
+
+    # ------------------------------------------------------------------
+    # STEP 4: Convex Hull Enclosure (Rib-Cage Guided Boundary)
+    # Ensures dense white consolidations are NOT hollowed out —
+    # the convex hull of the detected lung boundary wraps around them.
+    # ------------------------------------------------------------------
+    for mask_ref in [right_lung_raw, left_lung_raw]:
+        cnts, _ = cv2.findContours(mask_ref, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if cnts:
+            # Combine all contour points and compute their convex hull
+            all_pts = np.concatenate(cnts)
+            hull = cv2.convexHull(all_pts)
+            mask_ref[:] = 0
+            cv2.fillPoly(mask_ref, [hull], 255)
+
+    # Restrict convex hull to torso boundary
     right_lung_raw[torso_mask == 0] = 0
     left_lung_raw[torso_mask == 0] = 0
 
-    # 2. Strict Midline Vertebral Separation
-    right_lung_raw[:, (mid_x - spine_gap):] = 0
-    left_lung_raw[:, :(mid_x + spine_gap)] = 0
+    # ------------------------------------------------------------------
+    # STEP 5: Anatomical Fallback for Severe Consolidation
+    # If thresholding found almost nothing (extreme bilateral whiteout),
+    # use the lateral torso contour as the outer lung boundary.
+    # ------------------------------------------------------------------
+    if np.sum(right_lung_raw > 0) < min_lung_area:
+        # Build fallback from torso right half
+        fallback_r = torso_mask.copy()
+        fallback_r[:, int(mid_x):] = 0
+        # Erode inward from skin to approximate inner thoracic wall
+        erode_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(act_w * 0.06), int(act_h * 0.04)))
+        fallback_r = cv2.erode(fallback_r, erode_k, iterations=1)
+        # Crop to central thoracic region (skip neck/abdomen)
+        fallback_r[:int(t_ymin + act_h * 0.12), :] = 0
+        fallback_r[int(t_ymin + act_h * 0.88):, :] = 0
+        right_lung_raw = fallback_r
 
-    # 3. Smooth Anatomical Contouring via Gaussian Antialiasing
+    if np.sum(left_lung_raw > 0) < min_lung_area:
+        fallback_l = torso_mask.copy()
+        fallback_l[:, :int(mid_x)] = 0
+        erode_k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(act_w * 0.06), int(act_h * 0.04)))
+        fallback_l = cv2.erode(fallback_l, erode_k, iterations=1)
+        fallback_l[:int(t_ymin + act_h * 0.12), :] = 0
+        fallback_l[int(t_ymin + act_h * 0.88):, :] = 0
+        left_lung_raw = fallback_l
+
+    # ------------------------------------------------------------------
+    # STEP 6: Final Morphological Polish & Hemithorax Separation
+    # ------------------------------------------------------------------
+    for mask_obj in [right_lung_raw, left_lung_raw]:
+        cnts, _ = cv2.findContours(mask_obj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for cnt in cnts:
+            cv2.drawContours(mask_obj, [cnt], -1, 255, -1)
+        mask_obj[:] = cv2.morphologyEx(
+            mask_obj, cv2.MORPH_CLOSE,
+            cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+        )
+
+    # Smooth contour edges
     right_lung_raw = cv2.GaussianBlur(right_lung_raw, (15, 15), 0)
     _, right_lung_raw = cv2.threshold(right_lung_raw, 127, 255, cv2.THRESH_BINARY)
     left_lung_raw = cv2.GaussianBlur(left_lung_raw, (15, 15), 0)
     _, left_lung_raw = cv2.threshold(left_lung_raw, 127, 255, cv2.THRESH_BINARY)
+
+    # Strict midline vertebral separation
+    right_lung_raw[:, (mid_x - spine_gap):] = 0
+    left_lung_raw[:, :(mid_x + spine_gap)] = 0
 
     combined_lung = cv2.bitwise_or(right_lung_raw, left_lung_raw)
 
@@ -273,10 +346,9 @@ def extract_image_dependent_lung_fields(
         "total_lung_pixels": total_lung_pixels,
         "coverage_percentage": round(float(total_lung_pixels / total_pixels) * 100.0, 2),
         "right_to_left_ratio": round(float(r_pixels / max(l_pixels, 1)), 3),
-        "effective_threshold": 0.50
+        "otsu_threshold_value": float(otsu_val),
+        "effective_threshold": float(otsu_val)
     }
-
-    return combined_lung, right_lung_raw, left_lung_raw, seg_meta
 
     return combined_lung, right_lung_raw, left_lung_raw, seg_meta
 
@@ -373,21 +445,9 @@ def validate_segmentation_sanity(
     }
 
 
-_ml_segmenter_instance = None
-
 def get_ml_segmenter():
-    global _ml_segmenter_instance
-    if _ml_segmenter_instance is None:
-        import sys
-        ml_path = r"D:\PneumoniaML"
-        if ml_path not in sys.path:
-            sys.path.insert(0, ml_path)
-        try:
-            from ml.lung_segmentation import MLLungSegmenter
-            _ml_segmenter_instance = MLLungSegmenter()
-        except Exception as e:
-            print(f"Notice: Could not load MLLungSegmenter ({e})")
-    return _ml_segmenter_instance
+    """Legacy stub — ML segmenter is no longer used in the traditional DIP pipeline."""
+    return None
 
 
 def perform_lung_segmentation(
@@ -396,21 +456,58 @@ def perform_lung_segmentation(
     morph_kernel_size: int = 7
 ) -> Dict[str, Any]:
     """
-    Main entrypoint for Stage 7: Lung-Region Segmentation using Pretrained Deep U-Net.
+    Main entrypoint for Stage 7: Lung-Region Segmentation using Pretrained Deep U-Net,
+    with classical anatomical fallback if U-Net model is unavailable.
     """
     h, w = enhanced_gray.shape
 
     # 1. Torso Isolation
     torso_mask, torso_stats = isolate_patient_torso(enhanced_gray)
 
-    # 2. Anatomical Thoracic Silhouette & Lung Field Extraction
-    heart_mask, retrocardiac_roi, heart_stats = detect_mediastinum_and_heart(enhanced_gray, torso_mask)
-    combined_lung_mask, right_lung_mask, left_lung_mask, seg_meta = extract_image_dependent_lung_fields(
-        enhanced_gray=enhanced_gray,
-        torso_mask=torso_mask,
-        heart_mask=heart_mask,
-        morph_kernel_size=morph_kernel_size
-    )
+    # 2. Try Pretrained Deep U-Net (Pixel-Perfect Anatomical Lung Contours)
+    use_unet = False
+    try:
+        from ml.lung_segmentation import MLLungSegmenter
+        seg_engine = MLLungSegmenter()
+        if seg_engine.model_loaded and seg_engine.model is not None:
+            unet_res = seg_engine.segment(enhanced_gray)
+            combined_lung_mask = unet_res["combined_lung_mask"]
+            right_lung_mask = unet_res["right_lung_mask"]
+            left_lung_mask = unet_res["left_lung_mask"]
+            heart_mask = unet_res["heart_mask"]
+            retrocardiac_roi = unet_res["retrocardiac_roi"]
+
+            r_pixels = int(np.sum(right_lung_mask > 0))
+            l_pixels = int(np.sum(left_lung_mask > 0))
+            total_lung_pixels = r_pixels + l_pixels
+
+            heart_stats = {
+                "heart_detected": True,
+                "heart_area_pct": round(float(np.sum(heart_mask > 0) / (h * w)) * 100.0, 2),
+                "retrocardiac_pixels": int(np.sum(retrocardiac_roi > 0))
+            }
+            seg_meta = {
+                "right_lung_pixels": r_pixels,
+                "left_lung_pixels": l_pixels,
+                "total_lung_pixels": total_lung_pixels,
+                "coverage_percentage": round(float(total_lung_pixels / (h * w)) * 100.0, 2),
+                "right_to_left_ratio": round(float(r_pixels / max(l_pixels, 1)), 3),
+                "otsu_threshold_value": 110.0,
+                "effective_threshold": 110.0
+            }
+            use_unet = True
+    except Exception as e:
+        use_unet = False
+
+    # Classical fallback if U-Net is unavailable
+    if not use_unet:
+        heart_mask, retrocardiac_roi, heart_stats = detect_mediastinum_and_heart(enhanced_gray, torso_mask)
+        combined_lung_mask, right_lung_mask, left_lung_mask, seg_meta = extract_image_dependent_lung_fields(
+            enhanced_gray=enhanced_gray,
+            torso_mask=torso_mask,
+            heart_mask=heart_mask,
+            morph_kernel_size=morph_kernel_size
+        )
 
     # 3. Sanity & Quality Validation
     sanity_res = validate_segmentation_sanity(

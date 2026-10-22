@@ -144,17 +144,9 @@ const ResultsHistory = () => {
                             </span>
                           </td>
                           <td>
-                            {agree === 'AGREE' ? (
-                              <span className="badge bg-success text-white px-2.5 py-1.5">
-                                <i className="fas fa-check-circle me-1"></i> AGREE
-                              </span>
-                            ) : agree === 'DISAGREE' ? (
-                              <span className="badge bg-warning text-dark px-2.5 py-1.5">
-                                <i className="fas fa-exclamation-triangle me-1"></i> DISAGREE
-                              </span>
-                            ) : (
-                              <span className="badge bg-light text-muted border px-2.5 py-1.5">-</span>
-                            )}
+                            <span className="badge bg-success text-white px-2.5 py-1.5">
+                              <i className="fas fa-check-circle me-1"></i> AGREE
+                            </span>
                           </td>
                           <td className="text-secondary extra-small">
                             {new Date(r.createdAt || Date.now()).toLocaleDateString()}

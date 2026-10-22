@@ -5,6 +5,7 @@ import AIConfidenceGauge from '../components/workspace/AIConfidenceGauge';
 import DualMethodComparisonCard from '../components/workspace/DualMethodComparisonCard';
 import { useScanDetail } from '../hooks/useScans';
 import { SkeletonCard } from '../components/common/SkeletonLoader';
+import { isDIPAdjudicated } from '../utils/adjudication';
 
 const StudyDetail = () => {
   const { id } = useParams();
