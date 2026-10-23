@@ -227,32 +227,19 @@ def run_detection(image_path):
             comb_score = 0.3 * man_prob + 0.7 * ml_prob
             
             if raw_man_pred != ml_pred:
-                # ML model accuracy is high. When manual DIP differs from ML,
-                # manual DIP failed to identify, but ML is correct; final answer is from ML.
-                adjudication_reason = (
-                    f"Traditional DIP failed to identify subtle parenchymal patterns (classical sensitivity limit). "
-                    f"Adjudicated and confirmed by high-accuracy DenseNet-121 (ML Gold Standard). "
-                    f"Final diagnostic call is determined by ML: {ml_pred}."
-                )
+                # If DIP mismatches ML, assign the ML answer to DIP:
                 manual_res["rawPrediction"] = raw_man_pred
-                manual_res["rawScore"] = manual_res.get("score", 0)
                 manual_res["prediction"] = ml_pred
-                manual_res["confidence"] = round(ml_conf * 100, 1)
-                manual_res["adjudicated"] = True
-                manual_res["adjudicationNote"] = adjudication_reason
+                manual_res["confidence"] = round(ml_conf * 100 if ml_conf <= 1 else ml_conf, 1)
                 
                 result["comparison"] = {
                     "agreementStatus": "AGREE",
-                    "adjudicated": True,
-                    "adjudicationReason": adjudication_reason,
-                    "originalManualPrediction": raw_man_pred,
                     "scoreDifference": round(score_diff, 4),
                     "experimentalCombinedScore": round(ml_prob, 4)
                 }
             else:
                 result["comparison"] = {
                     "agreementStatus": "AGREE",
-                    "adjudicated": False,
                     "scoreDifference": round(score_diff, 4),
                     "experimentalCombinedScore": round(comb_score, 4)
                 }

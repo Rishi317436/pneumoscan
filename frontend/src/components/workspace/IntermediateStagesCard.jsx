@@ -12,8 +12,16 @@ const IntermediateStagesCard = ({ intermediateStages, onSelectStage }) => {
       title: 'CLAHE Enhanced',
       badge: 'Stage 6',
       badgeClass: 'bg-primary',
-      description: 'Contrast Limited Adaptive Histogram Equalization to optimize alveolar edge clarity.',
+      description: 'Contrast Limited Adaptive Histogram Equalization optimizing lung field contrast.',
       url: intermediateStages.clahe ? getImageUrl(intermediateStages.clahe) : null
+    },
+    {
+      id: 'lung_mask',
+      title: 'Thoracic Lung Extraction',
+      badge: 'Stage 8',
+      badgeClass: 'bg-info text-dark',
+      description: 'Anatomical segmentation isolating pulmonary parenchyma from thoracic walls.',
+      url: intermediateStages.lung_mask ? getImageUrl(intermediateStages.lung_mask) : null
     },
     {
       id: 'six_zones',
@@ -22,14 +30,6 @@ const IntermediateStagesCard = ({ intermediateStages, onSelectStage }) => {
       badgeClass: 'bg-success',
       description: 'Exact anatomical 6-zone subdivision (Upper, Middle, Lower hemithorax tiers).',
       url: intermediateStages.six_zones ? getImageUrl(intermediateStages.six_zones) : null
-    },
-    {
-      id: 'candidate_regions',
-      title: 'Lesion / Opacity Map',
-      badge: 'Stage 10',
-      badgeClass: 'bg-warning text-dark',
-      description: 'Candidate alveolar consolidation and interstitial infiltrate detection overlay.',
-      url: intermediateStages.candidate_regions ? getImageUrl(intermediateStages.candidate_regions) : null
     }
   ].filter(s => !!s.url);
 
@@ -37,17 +37,17 @@ const IntermediateStagesCard = ({ intermediateStages, onSelectStage }) => {
 
   return (
     <div className="rad-card p-4 mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-2">
         <div className="d-flex align-items-center gap-2">
           <i className="fas fa-layer-group text-cyan" style={{ color: 'var(--rad-cyan)' }}></i>
-          <h6 className="fw-bold text-white mb-0">Deterministic DIP Intermediate Pipeline Stages</h6>
+          <h6 className="fw-bold text-white mb-0">DIP Image Processing Stages</h6>
         </div>
         <span className="badge bg-secondary-subtle text-secondary extra-small">
-          Required Checkpoints ({stages.length}/3)
+          Stages ({stages.length}/3)
         </span>
       </div>
       <p className="text-secondary extra-small mb-3">
-        Inspect the verified intermediate transformation steps produced by the multi-stage digital image processing engine. Click any thumbnail to expand full resolution.
+        Inspect thoracic preprocessing and anatomical lung field segmentation stages. Click any thumbnail to expand.
       </p>
 
       <div className="row g-3">

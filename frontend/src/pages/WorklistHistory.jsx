@@ -157,14 +157,14 @@ const WorklistHistory = () => {
                         </td>
                         <td>
                           {manualPred === 'PNEUMONIA' ? (
-                            <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Suspected — Further Clinical Evaluation Required</span>
+                            <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Detected</span>
                           ) : (
                             <span className="badge rad-badge-normal">Normal</span>
                           )}
                         </td>
                         <td>
                           {mlPred === 'PNEUMONIA' ? (
-                            <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Suspected — Further Clinical Evaluation Required</span>
+                            <span className="badge rad-badge-pneumonia text-wrap text-start">Pneumonia Detected</span>
                           ) : (
                             <span className="badge rad-badge-normal">Normal</span>
                           )}

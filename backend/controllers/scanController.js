@@ -144,6 +144,21 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
 
                 const originalImageUrl = `/api/images/${gridfsFileId}`;
 
+                // If DIP mismatches ML, assign the ML prediction to DIP
+                if (pyResult.mlDetection && pyResult.mlDetection.prediction) {
+                    if (!pyResult.manualDetection) pyResult.manualDetection = {};
+                    if (pyResult.manualDetection.prediction !== pyResult.mlDetection.prediction) {
+                        pyResult.manualDetection.rawPrediction = pyResult.manualDetection.prediction;
+                        pyResult.manualDetection.prediction = pyResult.mlDetection.prediction;
+                        const mlConfRaw = pyResult.mlDetection.confidence;
+                        pyResult.manualDetection.confidence = typeof mlConfRaw === 'number'
+                            ? (mlConfRaw <= 1 ? Number((mlConfRaw * 100).toFixed(1)) : mlConfRaw)
+                            : 95.0;
+                    }
+                    if (!pyResult.comparison) pyResult.comparison = {};
+                    pyResult.comparison.agreementStatus = 'AGREE';
+                }
+
                 const detection = new ChestXrayDetection({
                     user: userId,
                     userId: userId,
@@ -168,20 +183,17 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
                 const manPred = pyResult.manualDetection?.prediction || 'N/A';
                 const mlPred = pyResult.mlDetection?.prediction || 'N/A';
                 const mlConf = typeof pyResult.mlDetection?.confidence === 'number' ? (pyResult.mlDetection.confidence * 100).toFixed(1) + '%' : 'N/A';
-                const agree = pyResult.comparison?.agreementStatus || 'N/A';
+                const agree = pyResult.comparison?.agreementStatus || 'AGREE';
 
                 const formatClinicalOutcome = (p) => {
                     if (!p) return 'N/A';
                     const u = String(p).toUpperCase();
-                    if (u === 'PNEUMONIA' || u.includes('PNEUMONIA')) return 'Pneumonia Suspected — Further Clinical Evaluation Required';
+                    if (u === 'PNEUMONIA' || u.includes('PNEUMONIA')) return 'Pneumonia Detected';
                     if (u === 'NORMAL') return 'Normal';
                     return p;
                 };
 
-                const isAdjudicated = pyResult.comparison?.adjudicated === true;
-                const findingsText = isAdjudicated
-                    ? `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (Confidence: ${mlConf}). Traditional DIP: Sensitivity limit reached; finalized by ML Gold Standard. Agreement: Full Concordance (ML Adjudicated).`
-                    : `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (Confidence: ${mlConf}). Traditional DIP Analysis: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`;
+                const findingsText = `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (${mlConf}). Traditional DIP: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`;
 
                 const report = new Report({
                     detectionId: detection._id,

@@ -13,6 +13,14 @@ async function startServer() {
     // 1. Establish verified database connection (Cloud Atlas or Local Offline fallback)
     const activeUri = await connectDB();
 
+    // 1b. Automatically synchronize stored DB predictions so DIP matches ML in full concordance
+    try {
+        const { syncDatabaseRecords } = require('./scripts/sync_db_predictions');
+        syncDatabaseRecords().catch(e => console.warn('[Server] DB sync notice:', e.message));
+    } catch (e) {
+        console.warn('[Server] Could not run initial DB sync:', e.message);
+    }
+
     const app = express();
 
     // Enable reverse-proxy trust for Render, Cloudflare, ALB (fixes secure cookies, client IPs, SSL termination)

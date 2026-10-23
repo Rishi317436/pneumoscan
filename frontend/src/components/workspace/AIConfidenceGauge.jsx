@@ -1,11 +1,9 @@
 import React from 'react';
-import { isDIPAdjudicated } from '../../utils/adjudication';
 
-const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
+const AIConfidenceGauge = ({ mlDetection, manualDetection }) => {
   const isPneumonia = mlDetection?.prediction === 'PNEUMONIA';
   const rawConfidence = typeof mlDetection?.confidence === 'number' ? mlDetection.confidence : 0;
   const confidencePercent = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence;
-  const isAdjudicated = isDIPAdjudicated(manualDetection, mlDetection, comparison);
 
   return (
     <div className={`rad-card p-4 ${isPneumonia ? 'rad-card-glow-rose' : 'rad-card-glow-emerald'}`}>
@@ -23,7 +21,7 @@ const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
         <div>
           {isPneumonia ? (
             <span className="badge rad-badge-pneumonia fs-6 px-3 py-2 text-wrap text-start lh-base">
-              <i className="fas fa-exclamation-triangle me-2"></i> Pneumonia Suspected — Further Clinical Evaluation Required
+              <i className="fas fa-exclamation-triangle me-2"></i> Pneumonia Detected
             </span>
           ) : (
             <span className="badge rad-badge-normal fs-6 px-3 py-2">
@@ -65,13 +63,13 @@ const AIConfidenceGauge = ({ mlDetection, manualDetection, comparison }) => {
           <div className="col-4">
             <small className="text-muted extra-small d-block">Manual DIP</small>
             <strong className={`small ${manualDetection?.prediction === 'PNEUMONIA' ? 'text-danger' : 'text-success'}`}>
-              {manualDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (manualDetection?.prediction === 'NORMAL' ? 'Normal' : manualDetection?.prediction || 'N/A')}
+              {manualDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Detected' : (manualDetection?.prediction === 'NORMAL' ? 'Normal' : manualDetection?.prediction || 'N/A')}
             </strong>
           </div>
           <div className="col-4 border-start border-end border-secondary border-opacity-25">
             <small className="text-muted extra-small d-block">Deep Learning</small>
             <strong className={`small ${mlDetection?.prediction === 'PNEUMONIA' ? 'text-danger' : 'text-success'}`}>
-              {mlDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Suspected' : (mlDetection?.prediction === 'NORMAL' ? 'Normal' : mlDetection?.prediction || 'N/A')}
+              {mlDetection?.prediction === 'PNEUMONIA' ? 'Pneumonia Detected' : (mlDetection?.prediction === 'NORMAL' ? 'Normal' : mlDetection?.prediction || 'N/A')}
             </strong>
           </div>
           <div className="col-4">
