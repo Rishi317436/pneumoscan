@@ -107,6 +107,7 @@ const StudyDetail = () => {
             manualDetection={detection.manualDetection}
             mlDetection={detection.mlDetection}
             comparison={detection.comparison}
+            filename={filename}
           />
         </div>
       </div>

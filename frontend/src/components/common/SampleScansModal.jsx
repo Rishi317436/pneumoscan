@@ -1,4 +1,5 @@
 import React from 'react';
+import { SAMPLE_BENCHMARKS, NORMAL_CONTROL_SAMPLES } from '../../config/sampleObservations';
 
 const SampleScansModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -6,41 +7,35 @@ const SampleScansModal = ({ isOpen, onClose }) => {
   const samples = [
     {
       type: 'PNEUMONIA',
-      badge: 'Pneumonia Verified',
+      badge: 'Pneumonia Benchmark 1',
       badgeClass: 'rad-badge-pneumonia',
       title: 'Sample 1: Pneumonia Radiograph',
-      filename: 'sample_pneumonia_1.jpeg',
-      url: '/sample_scans/sample_pneumonia_1.jpeg',
-      description: 'Marked consolidation and opacity pattern.'
+      filename: SAMPLE_BENCHMARKS['person53_virus_107'].canonicalFilename,
+      url: SAMPLE_BENCHMARKS['person53_virus_107'].url,
+      description: 'Illustrative visual benchmark: Relative lower/perihilar haziness with overlapping structures.'
     },
     {
       type: 'PNEUMONIA',
-      badge: 'Pneumonia Verified',
+      badge: 'Pneumonia Benchmark 2',
       badgeClass: 'rad-badge-pneumonia',
       title: 'Sample 2: Pneumonia Radiograph',
-      filename: 'sample_pneumonia_2.jpeg',
-      url: '/sample_scans/sample_pneumonia_2.jpeg',
-      description: 'Extensive bronchovascular infiltrate & opacity.'
+      filename: SAMPLE_BENCHMARKS['person67_bacteria_333'].canonicalFilename,
+      url: SAMPLE_BENCHMARKS['person67_bacteria_333'].url,
+      description: 'Illustrative visual benchmark: Diffuse haziness across middle and lower pulmonary zones.'
     },
-    {
-      type: 'NORMAL',
-      badge: 'Normal Control',
-      badgeClass: 'rad-badge-normal',
-      title: 'Sample 3: Normal Chest Radiograph',
-      filename: 'sample_normal_1.jpeg',
-      url: '/sample_scans/sample_normal_1.jpeg',
-      description: 'Clear lung fields with symmetric radiolucency.'
-    },
-    {
-      type: 'NORMAL',
-      badge: 'Normal Control',
-      badgeClass: 'rad-badge-normal',
-      title: 'Sample 4: Normal Chest Radiograph',
-      filename: 'sample_normal_2.jpeg',
-      url: '/sample_scans/sample_normal_2.jpeg',
-      description: 'Unremarkable pulmonary parenchyma, normal cardiac silhouette.'
-    }
+    NORMAL_CONTROL_SAMPLES[0],
+    NORMAL_CONTROL_SAMPLES[1]
   ];
+
+  const handleMountSample = (sample) => {
+    window.dispatchEvent(new CustomEvent('pneumoscan:mount-sample', {
+      detail: {
+        sampleUrl: sample.url,
+        filename: sample.filename
+      }
+    }));
+    onClose();
+  };
 
   return (
     <div
@@ -108,8 +103,10 @@ const SampleScansModal = ({ isOpen, onClose }) => {
                       </div>
 
                       <div
-                        className="rounded mb-2 bg-black overflow-hidden d-flex align-items-center justify-content-center border border-secondary border-opacity-25"
+                        className="rounded mb-2 bg-black overflow-hidden d-flex align-items-center justify-content-center border border-secondary border-opacity-25 cursor-pointer"
                         style={{ height: '140px' }}
+                        onClick={() => handleMountSample(sample)}
+                        title="Click to mount in Workstation"
                       >
                         <img
                           src={sample.url}
@@ -126,13 +123,24 @@ const SampleScansModal = ({ isOpen, onClose }) => {
                       </p>
                     </div>
 
-                    <a
-                      href={sample.url}
-                      download={sample.filename}
-                      className="rad-btn-outline btn-sm py-1.5 px-3 w-100 text-center extra-small d-inline-flex align-items-center justify-content-center gap-1.5"
-                    >
-                      <i className="fas fa-download"></i> Download {sample.filename}
-                    </a>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleMountSample(sample)}
+                        className="rad-btn-primary btn-sm py-1.5 px-2.5 flex-fill extra-small d-inline-flex align-items-center justify-content-center gap-1"
+                        title="Load directly into Workstation dropzone"
+                      >
+                        <i className="fas fa-desktop"></i> Mount Scan
+                      </button>
+                      <a
+                        href={sample.url}
+                        download={sample.filename}
+                        className="rad-btn-outline btn-sm py-1.5 px-2.5 extra-small d-inline-flex align-items-center justify-content-center gap-1"
+                        title={`Download ${sample.filename}`}
+                      >
+                        <i className="fas fa-download"></i> Download
+                      </a>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -143,7 +151,7 @@ const SampleScansModal = ({ isOpen, onClose }) => {
           <div className="modal-footer border-secondary border-opacity-25 py-2.5 px-4 d-flex justify-content-between">
             <small className="text-secondary extra-small">
               <i className="fas fa-info-circle me-1 text-cyan" style={{ color: 'var(--rad-cyan, #39ff14)' }}></i>
-              Save any file to your computer, then mount it in the <strong>Workstation</strong> dropzone to run inference.
+              Click <strong>Mount Scan</strong> to analyze immediately, or download to test offline drag-and-drop.
             </small>
             <button type="button" className="rad-btn-outline btn-sm py-1 px-3 extra-small" onClick={onClose}>
               Close

@@ -1,10 +1,17 @@
 import React from 'react';
+import { getSampleBenchmark } from '../../config/sampleObservations';
 
-const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison }) => {
+const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison, filename }) => {
   const manual = manualDetection || {};
   const ml = mlDetection || {};
   const comp = comparison || {};
   const zones = manual.zones || {};
+
+  // Resolve sample benchmark observations if present
+  const sampleCfg = getSampleBenchmark(filename) || getSampleBenchmark(manual.sampleBenchmark?.canonicalFilename) || (manual.sampleBenchmark?.sampleId ? getSampleBenchmark(manual.sampleBenchmark.sampleId) : null);
+  const sampleSummary = manual.sampleObservationSummary || manual.sampleBenchmark?.summary || sampleCfg?.summary;
+  const sampleProvenance = manual.sampleObservationProvenance || manual.sampleBenchmark?.provenance || sampleCfg?.provenance;
+  const sampleObservations = sampleCfg?.observations || {};
 
   const isNormal = (manual.prediction || '').toUpperCase() === 'NORMAL';
   const rawScore = typeof manual.confidence === 'number'
@@ -32,6 +39,8 @@ const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison }) 
         return <span className="badge bg-success text-white extra-small">NORMAL</span>;
     }
   };
+
+  const hasObservations = Boolean(sampleSummary || Object.keys(sampleObservations).length > 0 || Object.values(zones).some(z => z && z.observation));
 
   return (
     <div className="rad-card p-4">
@@ -79,24 +88,62 @@ const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison }) 
               </div>
             </div>
 
+            {/* Observation Summary (Preliminary Visual Inspection) */}
+            {sampleSummary && (
+              <div className="p-2.5 rounded bg-surface border border-secondary border-opacity-25 mb-2.5 mt-1">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <span className="fw-bold text-white extra-small d-flex align-items-center gap-1.5">
+                    <i className="fas fa-notes-medical text-cyan" style={{ color: 'var(--rad-cyan)' }}></i>
+                    <span>Observation Summary</span>
+                  </span>
+                  <span className="badge bg-secondary-subtle text-secondary" style={{ fontSize: '0.62rem' }}>
+                    Visual Benchmark
+                  </span>
+                </div>
+                <p className="text-secondary extra-small mb-1" style={{ fontSize: '0.72rem', lineHeight: '1.3' }}>
+                  {sampleSummary}
+                </p>
+                <div className="text-muted font-monospace" style={{ fontSize: '0.62rem' }}>
+                  <i className="fas fa-info-circle me-1"></i>
+                  Provenance: {sampleProvenance || 'Preliminary visual inspection (illustrative benchmark observation)'}
+                </div>
+              </div>
+            )}
+
             {/* 6-Zone Regional Analysis */}
-            <h6 className="fw-bold text-muted extra-small text-uppercase mt-2 mb-2">
-              <i className="fas fa-th-large me-1 text-cyan" style={{ color: 'var(--rad-cyan)' }}></i> 6-Zone Regional Analysis
-            </h6>
+            <div className="d-flex justify-content-between align-items-center mt-2 mb-2">
+              <h6 className="fw-bold text-muted extra-small text-uppercase mb-0">
+                <i className="fas fa-th-large me-1 text-cyan" style={{ color: 'var(--rad-cyan)' }}></i> 6-Zone Regional Analysis
+              </h6>
+              {hasObservations && (
+                <span className="text-muted extra-small" style={{ fontSize: '0.65rem' }}>
+                  Preliminary Visual Inspection
+                </span>
+              )}
+            </div>
             <div className="row g-1.5 mt-auto">
               {zoneKeys.map(({ key, short, name }) => {
                 const z = zones[key] || zones[short] || {};
                 const status = z.status || 'NORMAL';
+                const observation = z.observation || sampleObservations[key];
+
                 return (
-                  <div key={key} className="col-6">
-                    <div className="p-2 rounded bg-surface border border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong className="text-white extra-small d-block font-monospace">{short}</strong>
-                        <span className="text-secondary extra-small" style={{ fontSize: '0.68rem' }}>{name.split(' ')[0]}</span>
+                  <div key={key} className={hasObservations ? "col-12" : "col-6"}>
+                    <div className="p-2 rounded bg-surface border border-secondary border-opacity-25 d-flex flex-column justify-content-between">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong className="text-white extra-small font-monospace">{short}</strong>
+                          <span className="text-secondary extra-small ms-1.5" style={{ fontSize: '0.68rem' }}>{name.split(' ')[0]}</span>
+                        </div>
+                        <div className="text-end">
+                          {getStatusBadge(status)}
+                        </div>
                       </div>
-                      <div className="text-end">
-                        {getStatusBadge(status)}
-                      </div>
+                      {observation && (
+                        <p className="text-secondary extra-small mb-0 mt-1" style={{ fontSize: '0.7rem', lineHeight: '1.3' }}>
+                          {observation}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );

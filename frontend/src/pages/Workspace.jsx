@@ -26,7 +26,26 @@ const Workspace = () => {
   const isProcessing = Boolean(uploadMutation.isPending || uploadMutation.isLoading || isAnalyzing);
 
   useEffect(() => {
+    const handleMountSample = async (e) => {
+      const { sampleUrl, filename } = e.detail || {};
+      if (!sampleUrl || !filename) return;
+      try {
+        const response = await fetch(sampleUrl);
+        const blob = await response.blob();
+        const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+        handleFile(file);
+        const el = document.getElementById('workstation');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+        addToast(`Sample ${filename} mounted for analysis.`, 'info');
+      } catch (err) {
+        console.error('Failed to mount sample radiograph:', err);
+        addToast('Failed to load sample radiograph.', 'error');
+      }
+    };
+
+    window.addEventListener('pneumoscan:mount-sample', handleMountSample);
     return () => {
+      window.removeEventListener('pneumoscan:mount-sample', handleMountSample);
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
       }
@@ -206,6 +225,7 @@ const Workspace = () => {
               manualDetection={activeDetection.manualDetection}
               mlDetection={activeDetection.mlDetection}
               comparison={activeDetection.comparison}
+              filename={activeDetection.scanId?.filename || selectedFile?.name || activeDetection.originalImage}
             />
           </div>
         </div>

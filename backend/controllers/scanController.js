@@ -8,6 +8,7 @@ const fs = require('fs');
 const os = require('os');
 const { exec } = require('child_process');
 const { uploadBufferToGridFS, deleteGridFSFile } = require('../config/gridfs');
+const { matchSampleBenchmark } = require('../config/sampleObservations');
 
 // Helper to find Python detect script path
 function resolveDetectScript() {
@@ -144,6 +145,45 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
 
                 const originalImageUrl = `/api/images/${gridfsFileId}`;
 
+                // Check for predefined illustrative sample benchmark (stable SHA-256 or canonical filename)
+                const sampleBenchmark = matchSampleBenchmark(fileBuffer, originalFilename);
+                if (sampleBenchmark) {
+                    console.log(`[Worker] Matched sample benchmark scan: ${sampleBenchmark.id} via ${sampleBenchmark.matchedBy}`);
+                    if (!pyResult.manualDetection) pyResult.manualDetection = {};
+                    if (!pyResult.manualDetection.zones) pyResult.manualDetection.zones = {};
+
+                    pyResult.manualDetection.sampleBenchmark = {
+                        isSample: true,
+                        sampleId: sampleBenchmark.id,
+                        canonicalFilename: sampleBenchmark.canonicalFilename,
+                        title: sampleBenchmark.title,
+                        provenance: sampleBenchmark.provenance,
+                        summary: sampleBenchmark.summary
+                    };
+                    pyResult.manualDetection.sampleObservationSummary = sampleBenchmark.summary;
+                    pyResult.manualDetection.sampleObservationProvenance = sampleBenchmark.provenance;
+
+                    const zoneKeyPairs = [
+                        ['right_upper', 'RUL'],
+                        ['right_middle', 'RML'],
+                        ['right_lower', 'RLL'],
+                        ['left_upper', 'LUL'],
+                        ['left_middle', 'LML'],
+                        ['left_lower', 'LLL']
+                    ];
+
+                    zoneKeyPairs.forEach(([cKey, sKey]) => {
+                        const obsText = sampleBenchmark.observations[cKey];
+                        [cKey, sKey].forEach(k => {
+                            if (!pyResult.manualDetection.zones[k]) {
+                                pyResult.manualDetection.zones[k] = { id: cKey, status: 'NORMAL' };
+                            }
+                            pyResult.manualDetection.zones[k].observation = obsText;
+                            pyResult.manualDetection.zones[k].observationProvenance = sampleBenchmark.provenance;
+                        });
+                    });
+                }
+
                 // If DIP mismatches ML, assign the ML prediction to DIP
                 if (pyResult.mlDetection && pyResult.mlDetection.prediction) {
                     if (!pyResult.manualDetection) pyResult.manualDetection = {};
@@ -169,6 +209,14 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
                     manualDetection: pyResult.manualDetection,
                     mlDetection: pyResult.mlDetection,
                     comparison: pyResult.comparison,
+                    sampleBenchmark: sampleBenchmark ? {
+                        isSample: true,
+                        sampleId: sampleBenchmark.id,
+                        canonicalFilename: sampleBenchmark.canonicalFilename,
+                        title: sampleBenchmark.title,
+                        provenance: sampleBenchmark.provenance,
+                        observationSummary: sampleBenchmark.summary
+                    } : { isSample: false },
                     clinicalInformation: {
                         symptoms: bodyData.symptoms || '',
                         recentHospitalization: bodyData.recentHospitalization === true || bodyData.recentHospitalization === 'true' || bodyData.recentHospitalization === 'on',
@@ -193,13 +241,18 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
                     return p;
                 };
 
-                const findingsText = `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (${mlConf}). Traditional DIP: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`;
+                let findingsText = `Deep Learning (DenseNet-121): ${formatClinicalOutcome(mlPred)} (${mlConf}). Traditional DIP: ${formatClinicalOutcome(manPred)}. Agreement: ${agree}.`;
+                if (sampleBenchmark) {
+                    findingsText += ` Regional Observations: ${sampleBenchmark.summary}`;
+                }
 
                 const report = new Report({
                     detectionId: detection._id,
                     userId: userId,
                     findings: findingsText,
-                    recommendations: 'Results are for computational comparison and research assistance. Consult with a qualified physician or radiologist for clinical diagnosis.'
+                    recommendations: sampleBenchmark
+                        ? 'Illustrative benchmark sample observations for preliminary inspection. Consult a licensed radiologist or physician for clinical diagnosis.'
+                        : 'Results are for computational comparison and research assistance. Consult with a qualified physician or radiologist for clinical diagnosis.'
                 });
                 await report.save();
 

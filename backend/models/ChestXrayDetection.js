@@ -48,6 +48,14 @@ const ChestXrayDetectionSchema = new mongoose.Schema({
     },
     acquisitionClassification: { type: String },
     etiologyPrediction: { type: String },
+    sampleBenchmark: {
+        isSample: { type: Boolean, default: false },
+        sampleId: { type: String },
+        canonicalFilename: { type: String },
+        title: { type: String },
+        provenance: { type: String },
+        observationSummary: { type: String }
+    },
     createdAt: { type: Date, default: Date.now, index: true }
 }, { strict: false });
 
