@@ -36,6 +36,22 @@ function runTests() {
         }
       }
       console.log('PASS: Sample 1 all 6 zone observations verified matching specification.');
+
+      const expectedStatuses1 = {
+        right_upper: 'NORMAL',
+        right_middle: 'SUSPICIOUS',
+        right_lower: 'ABNORMAL',
+        left_upper: 'NORMAL',
+        left_middle: 'SUSPICIOUS',
+        left_lower: 'SUSPICIOUS'
+      };
+      for (const [zone, exp] of Object.entries(expectedStatuses1)) {
+        if (match1.zoneStatuses[zone] !== exp) {
+          console.error(`FAIL: Sample 1 zone status [${zone}] mismatch.\nExpected: "${exp}"\nGot:      "${match1.zoneStatuses[zone]}"`);
+          failures++;
+        }
+      }
+      console.log('PASS: Sample 1 all 6 zone statuses verified.');
     }
   }
 
@@ -69,6 +85,22 @@ function runTests() {
         }
       }
       console.log('PASS: Sample 2 all 6 zone observations verified matching specification.');
+
+      const expectedStatuses2 = {
+        right_upper: 'SUSPICIOUS',
+        right_middle: 'ABNORMAL',
+        right_lower: 'ABNORMAL',
+        left_upper: 'NORMAL',
+        left_middle: 'ABNORMAL',
+        left_lower: 'ABNORMAL'
+      };
+      for (const [zone, exp] of Object.entries(expectedStatuses2)) {
+        if (match2.zoneStatuses[zone] !== exp) {
+          console.error(`FAIL: Sample 2 zone status [${zone}] mismatch.\nExpected: "${exp}"\nGot:      "${match2.zoneStatuses[zone]}"`);
+          failures++;
+        }
+      }
+      console.log('PASS: Sample 2 all 6 zone statuses verified.');
     }
   }
 

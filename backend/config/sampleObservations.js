@@ -19,6 +19,14 @@ const SAMPLE_BENCHMARKS = {
       'bc6a03c24e90b580ba040525d895716b3110bc950d6d604431b952e1b3a6db92'
     ],
     summary: 'Preliminary visual inspection indicates relative lower/perihilar haziness with overlapping cardiac and vascular structures limiting lower left assessment.',
+    zoneStatuses: {
+      right_upper: 'NORMAL',
+      right_middle: 'SUSPICIOUS',
+      right_lower: 'ABNORMAL',
+      left_upper: 'NORMAL',
+      left_middle: 'SUSPICIOUS',
+      left_lower: 'SUSPICIOUS'
+    },
     observations: {
       right_upper: 'No obvious dense focal opacity apparent on preliminary visual inspection.',
       right_middle: 'Mild haziness may be present.',
@@ -38,6 +46,14 @@ const SAMPLE_BENCHMARKS = {
       '2680f0fa2b5f3fc0c9c7624aea952c5d42d354c05e538a77c0292d5395966c19'
     ],
     summary: 'Diffuse haziness is visible across middle and lower pulmonary zones bilaterally with relative preservation of upper lung aeration.',
+    zoneStatuses: {
+      right_upper: 'SUSPICIOUS',
+      right_middle: 'ABNORMAL',
+      right_lower: 'ABNORMAL',
+      left_upper: 'NORMAL',
+      left_middle: 'ABNORMAL',
+      left_lower: 'ABNORMAL'
+    },
     observations: {
       right_upper: 'Diffuse haziness is visible, with overlapping structures limiting assessment.',
       right_middle: 'Increased haziness is visible around the central lung region.',

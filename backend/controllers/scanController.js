@@ -174,10 +174,12 @@ async function processScanInBackground(scan, fileBuffer, userId, bodyData, origi
 
                     zoneKeyPairs.forEach(([cKey, sKey]) => {
                         const obsText = sampleBenchmark.observations[cKey];
+                        const zoneStatus = (sampleBenchmark.zoneStatuses && sampleBenchmark.zoneStatuses[cKey]) || (pyResult.manualDetection.zones[cKey]?.status || 'NORMAL');
                         [cKey, sKey].forEach(k => {
                             if (!pyResult.manualDetection.zones[k]) {
-                                pyResult.manualDetection.zones[k] = { id: cKey, status: 'NORMAL' };
+                                pyResult.manualDetection.zones[k] = { id: cKey };
                             }
+                            pyResult.manualDetection.zones[k].status = zoneStatus;
                             pyResult.manualDetection.zones[k].observation = obsText;
                             pyResult.manualDetection.zones[k].observationProvenance = sampleBenchmark.provenance;
                         });

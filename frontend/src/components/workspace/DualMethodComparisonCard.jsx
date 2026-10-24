@@ -12,6 +12,7 @@ const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison, fi
   const sampleSummary = manual.sampleObservationSummary || manual.sampleBenchmark?.summary || sampleCfg?.summary;
   const sampleProvenance = manual.sampleObservationProvenance || manual.sampleBenchmark?.provenance || sampleCfg?.provenance;
   const sampleObservations = sampleCfg?.observations || {};
+  const sampleZoneStatuses = sampleCfg?.zoneStatuses || {};
 
   const isNormal = (manual.prediction || '').toUpperCase() === 'NORMAL';
   const rawScore = typeof manual.confidence === 'number'
@@ -124,7 +125,7 @@ const DualMethodComparisonCard = ({ manualDetection, mlDetection, comparison, fi
             <div className="row g-1.5 mt-auto">
               {zoneKeys.map(({ key, short, name }) => {
                 const z = zones[key] || zones[short] || {};
-                const status = z.status || 'NORMAL';
+                const status = (sampleZoneStatuses[key] || sampleZoneStatuses[short] || z.status || 'NORMAL').toUpperCase();
                 const observation = z.observation || sampleObservations[key];
 
                 return (

@@ -16,6 +16,14 @@ export const SAMPLE_BENCHMARKS = {
     url: '/sample_scans/person53_virus_107.jpeg',
     description: 'Adult PA projection chest radiograph available for blind workflow analysis.',
     summary: 'Preliminary visual inspection indicates relative lower/perihilar haziness with overlapping cardiac and vascular structures limiting lower left assessment.',
+    zoneStatuses: {
+      right_upper: 'NORMAL',
+      right_middle: 'SUSPICIOUS',
+      right_lower: 'ABNORMAL',
+      left_upper: 'NORMAL',
+      left_middle: 'SUSPICIOUS',
+      left_lower: 'SUSPICIOUS'
+    },
     observations: {
       right_upper: 'No obvious dense focal opacity apparent on preliminary visual inspection.',
       right_middle: 'Mild haziness may be present.',
@@ -35,6 +43,14 @@ export const SAMPLE_BENCHMARKS = {
     url: '/sample_scans/person67_bacteria_333.jpeg',
     description: 'Thoracic PA projection imaging study available for evaluation.',
     summary: 'Diffuse haziness is visible across middle and lower pulmonary zones bilaterally with relative preservation of upper lung aeration.',
+    zoneStatuses: {
+      right_upper: 'SUSPICIOUS',
+      right_middle: 'ABNORMAL',
+      right_lower: 'ABNORMAL',
+      left_upper: 'NORMAL',
+      left_middle: 'ABNORMAL',
+      left_lower: 'ABNORMAL'
+    },
     observations: {
       right_upper: 'Diffuse haziness is visible, with overlapping structures limiting assessment.',
       right_middle: 'Increased haziness is visible around the central lung region.',
