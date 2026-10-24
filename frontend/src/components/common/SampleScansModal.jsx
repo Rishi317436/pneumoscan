@@ -6,22 +6,22 @@ const SampleScansModal = ({ isOpen, onClose }) => {
 
   const samples = [
     {
-      type: 'PNEUMONIA',
-      badge: 'Pneumonia Benchmark 1',
-      badgeClass: 'rad-badge-pneumonia',
-      title: 'Sample 1: Pneumonia Radiograph',
+      type: 'STUDY',
+      badge: 'Study #01',
+      badgeClass: 'bg-dark border border-secondary text-cyan',
+      title: 'Sample 1: Chest Radiograph',
       filename: SAMPLE_BENCHMARKS['person53_virus_107'].canonicalFilename,
       url: SAMPLE_BENCHMARKS['person53_virus_107'].url,
-      description: 'Illustrative visual benchmark: Relative lower/perihilar haziness with overlapping structures.'
+      description: 'Standard posteroanterior projection chest study available for diagnostic analysis.'
     },
     {
-      type: 'PNEUMONIA',
-      badge: 'Pneumonia Benchmark 2',
-      badgeClass: 'rad-badge-pneumonia',
-      title: 'Sample 2: Pneumonia Radiograph',
+      type: 'STUDY',
+      badge: 'Study #02',
+      badgeClass: 'bg-dark border border-secondary text-cyan',
+      title: 'Sample 2: Chest Radiograph',
       filename: SAMPLE_BENCHMARKS['person67_bacteria_333'].canonicalFilename,
       url: SAMPLE_BENCHMARKS['person67_bacteria_333'].url,
-      description: 'Illustrative visual benchmark: Diffuse haziness across middle and lower pulmonary zones.'
+      description: 'Thoracic radiographic imaging study available for diagnostic analysis.'
     },
     NORMAL_CONTROL_SAMPLES[0],
     NORMAL_CONTROL_SAMPLES[1]
@@ -60,7 +60,7 @@ const SampleScansModal = ({ isOpen, onClose }) => {
               <div>
                 <h5 className="modal-title fw-bold text-white mb-0">Download Sample Chest X-Rays</h5>
                 <small className="text-secondary extra-small">
-                  Pre-verified benchmark radiographs for testing PneumoScan detection pipelines
+                  Standard benchmark radiographs for testing PneumoScan detection pipelines
                 </small>
               </div>
             </div>
@@ -77,7 +77,7 @@ const SampleScansModal = ({ isOpen, onClose }) => {
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 p-3 rounded bg-surface border border-secondary border-opacity-25">
               <div>
                 <strong className="text-white small d-block">Full Sample Testing Bundle (.zip)</strong>
-                <span className="text-secondary extra-small">Contains all 4 sample radiographs (2 Pneumonia + 2 Normal)</span>
+                <span className="text-secondary extra-small">Contains all 4 sample radiographs for testing and blind workflow evaluation</span>
               </div>
               <a
                 href="/sample_scans/sample_chest_xrays.zip"

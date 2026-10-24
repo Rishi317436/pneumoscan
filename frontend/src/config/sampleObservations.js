@@ -9,12 +9,12 @@ export const SAMPLE_BENCHMARKS = {
   'person53_virus_107': {
     id: 'person53_virus_107',
     canonicalFilename: 'person53_virus_107.jpeg',
-    title: 'Sample 1: Pneumonia Radiograph (person53_virus_107)',
-    badge: 'Pneumonia Benchmark',
-    badgeClass: 'rad-badge-pneumonia',
+    title: 'Sample 1: Chest Radiograph',
+    badge: 'Study #01',
+    badgeClass: 'bg-dark border border-secondary text-secondary',
     provenance: 'Preliminary visual inspection (illustrative benchmark observation)',
     url: '/sample_scans/person53_virus_107.jpeg',
-    description: 'Preliminary visual inspection: Relative lower/perihilar haziness with overlapping structures.',
+    description: 'Adult PA projection chest radiograph available for blind workflow analysis.',
     summary: 'Preliminary visual inspection indicates relative lower/perihilar haziness with overlapping cardiac and vascular structures limiting lower left assessment.',
     observations: {
       right_upper: 'No obvious dense focal opacity apparent on preliminary visual inspection.',
@@ -28,12 +28,12 @@ export const SAMPLE_BENCHMARKS = {
   'person67_bacteria_333': {
     id: 'person67_bacteria_333',
     canonicalFilename: 'person67_bacteria_333.jpeg',
-    title: 'Sample 2: Pneumonia Radiograph (person67_bacteria_333)',
-    badge: 'Pneumonia Benchmark',
-    badgeClass: 'rad-badge-pneumonia',
+    title: 'Sample 2: Chest Radiograph',
+    badge: 'Study #02',
+    badgeClass: 'bg-dark border border-secondary text-secondary',
     provenance: 'Preliminary visual inspection (illustrative benchmark observation)',
     url: '/sample_scans/person67_bacteria_333.jpeg',
-    description: 'Preliminary visual inspection: Diffuse haziness across middle and lower pulmonary zones.',
+    description: 'Thoracic PA projection imaging study available for evaluation.',
     summary: 'Diffuse haziness is visible across middle and lower pulmonary zones bilaterally with relative preservation of upper lung aeration.',
     observations: {
       right_upper: 'Diffuse haziness is visible, with overlapping structures limiting assessment.',
@@ -47,26 +47,26 @@ export const SAMPLE_BENCHMARKS = {
 };
 
 /**
- * Normal control samples in the modal
+ * Control test samples in the modal
  */
 export const NORMAL_CONTROL_SAMPLES = [
   {
-    type: 'NORMAL',
-    badge: 'Normal Control',
-    badgeClass: 'rad-badge-normal',
-    title: 'Sample 3: Normal Chest Radiograph',
-    filename: 'sample_normal_1.jpeg',
-    url: '/sample_scans/sample_normal_1.jpeg',
-    description: 'Clear lung fields with symmetric radiolucency and normal cardiac contour.'
+    type: 'STUDY',
+    badge: 'Study #03',
+    badgeClass: 'bg-dark border border-secondary text-secondary',
+    title: 'Sample 3: Chest Radiograph',
+    filename: 'sample_study_03.jpeg',
+    url: '/sample_scans/sample_study_03.jpeg',
+    description: 'Standard posteroanterior projection chest study for evaluation.'
   },
   {
-    type: 'NORMAL',
-    badge: 'Normal Control',
-    badgeClass: 'rad-badge-normal',
-    title: 'Sample 4: Normal Chest Radiograph',
-    filename: 'sample_normal_2.jpeg',
-    url: '/sample_scans/sample_normal_2.jpeg',
-    description: 'Unremarkable pulmonary parenchyma, normal bronchovascular distribution.'
+    type: 'STUDY',
+    badge: 'Study #04',
+    badgeClass: 'bg-dark border border-secondary text-secondary',
+    title: 'Sample 4: Chest Radiograph',
+    filename: 'sample_study_04.jpeg',
+    url: '/sample_scans/sample_study_04.jpeg',
+    description: 'Digital posteroanterior projection chest study for evaluation.'
   }
 ];
 
